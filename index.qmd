@@ -1,0 +1,49 @@
+---
+title: "IML and MID: Learning from Black-Box Models"
+subtitle: "Supplementary Materials for CONVENTION A | ASIA"
+author: "Matsumori-san & Ryoichi Asashiba"
+---
+
+## Overview
+
+Welcome to the supplementary repository for our presentation at **CONVENTION A \| ASIA**.
+
+This project demonstrates the application of **Maximum Interpretation Decomposition (MID)**, a novel approach in Interpretable Machine Learning (IML) designed to bridge the gap between high-performance "black-box" models and the transparency requirements of actuarial practice.
+
+### Key Topics of the Presentation
+
+-   **Theoretical Foundation**: Understanding the decomposition of complex models into interpretable main effects and interaction components.
+-   **Actuarial Application**: Benchmarking MID using the industry-standard `freMTPL2freq` dataset.
+-   **Multi-Language Software**: Hands-on demonstrations using `midr` (R) and `midlearn` (Python).
+
+------------------------------------------------------------------------
+
+## Project Structure
+
+This Quarto website contains the following sections:
+
+1.  [**Preprocessing**](./notebooks/preprocessing.html): Data cleaning and feature engineering of the French Motor Third-Party Liability dataset.
+2.  [**R Demo (midr)**](./notebooks/demo_midr.html): A demonstration of the `midr` package.
+3.  [**Python Demo (midlearn)**]: A demonstration of the `midlearn` package, providing a seamless interface for Python users.
+
+------------------------------------------------------------------------
+
+## Methodology: What is MID?
+
+Maximum Interpretation Decomposition (MID) allows actuaries to extract "smooth" and interpretable rating factors from complex models like Gradient Boosting Machines (GBM).
+
+Unlike traditional GLMs, MID captures non-linearities and interactions automatically while maintaining the clarity of traditional actuarial pricing tables.
+
+------------------------------------------------------------------------
+
+## Software & References
+
+-   **midr**: [GitHub Repository](https://github.com/ryo-asashi/midr) (R package)
+-   **midlearn**: [GitHub Repository](https://github.com/ryo-asashi/midlearn) (Python library)
+-   **Paper**: ["midr: Learning from Black-Box Models by Maximum Interpretation Decomposition"](https://arxiv.org/abs/2506.08338) (arXiv:2506.08338)
+
+## Acknowledgment
+
+This demonstration utilizes the `freMTPL2freq` dataset from the `CASdatasets` package.
+
+We would like to acknowledge the **AITools4Actuaries** project for their foundational work on benchmarking ML models in insurance, which served as a reference for our data preprocessing pipeline.

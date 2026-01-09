@@ -1,0 +1,154 @@
+---
+title: "Interpretation by Global Surrogate Modeling with {**midr**}"
+subtitle: "Convention A | Asia"
+---
+
+```{r}
+library(arrow)
+library(midr)
+library(midnight)
+library(ggplot2)
+```
+
+
+```{r}
+train <- read_parquet("../data/train.parquet")
+test  <- read_parquet("../data/test.parquet")
+```
+
+```{r}
+library(splines)
+
+fit_glm <- glm(
+  Frequency ~ VehPower + VehAge + ns(DrivAge, df = 5) + VehBrand + VehGas + LogDensity + Region,
+  data = train,
+  weights = Exposure,
+  family = quasipoisson()
+)
+
+summary(fit_glm)
+```
+
+```{r}
+mid_glm <- interpret(
+  Frequency ~
+    DrivAge + LogDensity + VehAge + VehPower +
+    Region + VehBrand + VehGas,
+  train,
+  weights = Exposure,
+  link = "log",
+  model = fit_glm,
+  verbosity = 3
+)
+```
+
+```{r}
+summary(mid_glm)
+```
+
+```{r}
+pal <- "#004080"
+gridExtra::grid.arrange(
+  ggmid(mid_glm, "DrivAge", linewidth = 1, color = pal),
+  ggmid(mid_glm, "LogDensity", linewidth = 1, color = pal),
+  ggmid(mid_glm, "VehAge", linewidth = 1, color = pal),
+  ggmid(mid_glm, "VehPower", linewidth = 1, color = pal)
+)
+```
+
+```{r}
+par.midr(mar = c(1,1,1,1))
+persp(mid_glm, "DrivAge:LogDensity", theta = 135, phi = 30, col = "#00408080")
+```
+
+```{r}
+imp_glm <- mid.importance(mid_glm, max.nrow = 2000)
+ggmid(imp_glm, "bee", theme = "viridis_r") + theme_midr("y")
+```
+
+```{r}
+### GBM
+X_train <- data.matrix(
+  train |> dplyr::select(-Frequency, -Exposure)
+)
+
+X_test  <- data.matrix(
+  test  |> dplyr::select(-Frequency, -Exposure)
+)
+
+library(lightgbm)
+
+params_lgb <- list(
+  objective = "poisson",
+  learning_rate = 0.02,
+  num_leaves = 31,
+  reg_lambda = 0,
+  reg_alpha = 2,
+  colsample_bynode = 0.8,
+  subsample = 0.8,
+  min_child_samples = 20,
+  min_split_gain = 0.1,
+  poisson_max_delta_step = 0.1
+)
+
+fit_lgb <- lightgbm(
+  data = X_train,
+  label = train$Frequency,
+  weights = train$Exposure,
+  params = params_lgb,
+  nrounds = 200L,
+  verbose = 0L,
+  categorical_feature = c("VehBrand", "VehGas", "Region")
+)
+
+summary(fit_lgb)
+
+fitted_values_lgb <- get.yhat(fit_lgb, X_train)
+```
+
+```{r}
+mid_lgb <- interpret(
+  Frequency ~ (. - Exposure)^2,
+  data = train,
+  weights = Exposure,
+  link = "log",
+  model = fit_lgb,
+  pred.fun = function(model, newdata) fitted_values_lgb,
+  verbosity = 3,
+  lambda = .05
+)
+
+# required 10 GiB
+```
+
+```{r}
+summary(mid_lgb)
+
+```
+
+```{r}
+
+gridExtra::grid.arrange(
+  ggmid(mid_lgb, "DrivAge", linewidth = 1, color = pal),
+  ggmid(mid_lgb, "LogDensity", linewidth = 1, color = pal),
+  ggmid(mid_lgb, "VehAge", linewidth = 1, color = pal),
+  ggmid(mid_lgb, "VehPower", linewidth = 1, color = pal)
+)
+```
+
+```{r}
+rotate <- theme(axis.text.x = element_text(angle = 90))
+gridExtra::grid.arrange(
+  nrow = 1,
+  ggmid(mid_lgb, "Region") + rotate,
+  ggmid(mid_lgb, "VehBrand") + rotate
+)
+```
+
+```{r}
+imp_lgb <- mid.importance(mid_lgb, data = train, max.nrow = 2000)
+ggmid(imp_lgb, "heatmap")
+ggmid(imp_lgb, "bee", max.nterms = 15, theme = "viridis_r")
+```
+
+```

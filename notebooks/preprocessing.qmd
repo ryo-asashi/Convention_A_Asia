@@ -1,0 +1,51 @@
+---
+title: "Preprocessing French MTPL Dataset"
+subtitle: "Convention A | Asia"
+---
+
+```{r}
+# load dataset
+data(freMTPL2freq, package = "CASdatasets")
+
+# preprocess dataset
+df_all <- freMTPL2freq |>
+  dplyr::mutate(
+    Frequency  = ClaimNb / Exposure,
+    VehAge = pmin(VehAge, 25),
+    VehBrand = forcats::fct_lump(VehBrand, 5),
+    LogDensity = log(Density),
+    Region = forcats::fct_lump(Region, 6)
+  ) |>
+  dplyr::select(
+    Frequency, Exposure, VehPower, VehAge,
+    DrivAge, VehBrand, VehGas, LogDensity, Region
+  ) |>
+  dplyr::as_tibble()
+
+# split dataset
+set.seed(42)
+df_split <- rsample::initial_split(df_all, prop = 1/2)
+df_train <- rsample::training(df_split)
+df_test  <- rsample::testing(df_split)
+
+# write dataset as parquets
+arrow::write_parquet(df_train, "../data/train.parquet")
+arrow::write_parquet(df_test, "../data/test.parquet")
+```
+
+
+```{r, echo = FALSE}
+set.seed(42)
+DT::datatable(
+  head(df_train, 1000),
+  caption = 'Preview of the preprocessed training dataset (First 1000 rows)',
+  filter = 'top',
+  options = list(
+    pageLength = 10,
+    autoWidth = TRUE,
+    scrollX = TRUE
+  )
+) |>
+  DT::formatRound(columns = c("Frequency", "LogDensity"), digits = 4) |>
+  DT::formatRound(columns = c("Exposure"), digits = 2)
+```

@@ -1,0 +1,24 @@
+project:
+  type: website
+  output-dir: docs  # GitHub Pages用に出力先をdocsに設定
+
+website:
+  title: "Interpretation by Surrogate Modeling: Convention A | Asia"
+  navbar:
+    left:
+      - href: index.qmd
+        text: Home
+      - href: notebooks/preprocessing.qmd
+        text: Preprocessing
+      - href: notebooks/demo_midr.qmd
+        text: R package {midr}
+
+format:
+  html:
+    theme: cosmo
+    code-fold: true
+    toc: true
+    number-sections: true
+
+execute:
+  freeze: auto
