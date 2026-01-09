@@ -1,0 +1,17 @@
+---
+title: "Python Demo"
+---
+
+```{python, eval = FALSE}
+import midlearn as mid
+from plotnine import *
+```
+
+```{python}
+import pandas as pd
+
+train = pd.read_parquet("../data/train.parquet")
+test  = pd.read_parquet("../data/test.parquet")
+
+print(train.head())
+```

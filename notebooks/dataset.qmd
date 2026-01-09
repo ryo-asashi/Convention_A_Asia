@@ -1,0 +1,96 @@
+---
+title: "French Motor Third-Party Liability Dataset"
+---
+
+## Overview
+
+In this section, we prepare the **French Motor Third-Party Liability (freMTPL2freq) dataset**, a standard benchmark in actuarial science.
+Our goal is to transform the raw data into a clean, structured format suitable for both R and Python environments.
+
+## Data Preprocessing
+
+The following transformations are applied to handle outliers, improve model stability, and align with actuarial pricing practices:
+
+- **Target Variable**: We define `Frequency` as the number of claims per unit of exposure. $$\text{Frequency} = \frac{\text{ClaimNb}}{\text{Exposure}} $$
+- **Capping**: `VehAge` (vehicle age) is capped at 25 years to mitigate the influence of extreme outliers (vintage cars) which follow different risk profiles.
+- **Log-Transformation**: `Density` (population density) is log-transformed to stabilize the variance and simplify its relationship with claim frequency.
+- **Categorical Lumping**: For `VehBrand` and `Region`, infrequent levels are collapsed into an "Other" category. This prevents overfitting in low-exposure segments.
+
+```{r}
+# load dataset from CASdatasets
+data(freMTPL2freq, package = "CASdatasets")
+
+# preprocess dataset
+df_all <- freMTPL2freq |>
+  dplyr::mutate(
+    Frequency  = ClaimNb / Exposure,
+    VehAge = pmin(VehAge, 25),
+    VehBrand = forcats::fct_lump(VehBrand, 5),
+    LogDensity = log(Density),
+    Region = forcats::fct_lump(Region, 6)
+  ) |>
+  dplyr::select(
+    Frequency, Exposure, VehPower, VehAge,
+    DrivAge, VehBrand, VehGas, LogDensity, Region
+  ) |>
+  dplyr::as_tibble()
+```
+
+## Data Split for Hold-Out Validation
+
+To ensure a robust evaluation of our models, we split the dataset into training and testing sets.
+
+We store these datasets in **Parquet** format.
+Unlike standard CSV files, Parquet preserves schema information (e.g., categorical types) and provides high-performance I/O.
+
+By locking the data into a binary format after the initial split, we guarantee that all subsequent modeling steps across different environments, R and Python, remain consistent.
+
+```{r}
+# split dataset
+set.seed(42)
+df_split <- rsample::initial_split(df_all, prop = 1/2)
+df_train <- rsample::training(df_split)
+df_test  <- rsample::testing(df_split)
+
+# write dataset as parquets
+arrow::write_parquet(df_train, "../data/train.parquet")
+arrow::write_parquet(df_test, "../data/test.parquet")
+```
+
+## Data Preview
+
+Below is a summary of the first 1000 rows of the processed training dataset.
+The `Exposure` column will be utilized as an **offset** in our subsequent modeling to account for varying policy durations.
+
+```{r, echo = FALSE, warning = FALSE}
+library(reactable)
+library(htmltools)
+reactable(
+  head(df_train, 1000),
+  pagination = TRUE,
+  showPagination = TRUE,
+  defaultPageSize = 10,
+  filterable = TRUE,
+  searchable = TRUE,
+  bordered = TRUE,
+  highlight = TRUE,
+  style = list(fontSize = "0.85rem"), 
+  columns = list(
+    Frequency  = colDef(format = colFormat(digits = 4)),
+    Exposure   = colDef(format = colFormat(digits = 2)),
+    LogDensity = colDef(format = colFormat(digits = 4))
+  ),
+  theme = reactableTheme(
+    headerStyle = list(
+      backgroundColor = "#2c3e50",
+      color = "#ffffff",
+      fontWeight = "bold",
+      "&:hover" = list(backgroundColor = "#1a252f")
+    ),
+    borderColor = "#dfe2e5",
+    stripedColor = "#f9f9f9",
+    highlightColor = "#eab30822",
+    cellPadding = "6px 12px"
+  )
+)
+```

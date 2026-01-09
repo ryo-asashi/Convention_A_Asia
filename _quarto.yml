@@ -3,22 +3,24 @@ project:
   output-dir: docs  # GitHub Pages用に出力先をdocsに設定
 
 website:
-  title: "Interpretation by Surrogate Modeling: Convention A | Asia"
+  title: "Maximizing the Interpretation of Black-Box Models"
   navbar:
     left:
       - href: index.qmd
         text: Home
-      - href: notebooks/preprocessing.qmd
-        text: Preprocessing
-      - href: notebooks/demo_midr.qmd
-        text: R package {midr}
+      - href: notebooks/dataset.qmd
+        text: Dataset
+      - href: notebooks/demo_r.qmd
+        text: R Demo
+      - href: notebooks/demo_py.qmd
+        text: Python Demo
 
 format:
   html:
-    theme: cosmo
+    theme: flatly
     code-fold: true
     toc: true
-    number-sections: true
+    number-sections: false
 
 execute:
   freeze: auto

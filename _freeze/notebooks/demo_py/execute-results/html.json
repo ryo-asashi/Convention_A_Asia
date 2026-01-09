@@ -1,0 +1,12 @@
+{
+  "hash": "138a0de701957ca8ea70471ca9eb35c2",
+  "result": {
+    "engine": "jupyter",
+    "markdown": "---\ntitle: \"Python Demo\"\n---\n\n::: {#a2ff8ac5 .cell execution_count=1}\n``` {.python .cell-code}\nimport midlearn as mid\nfrom plotnine import *\n```\n\n::: {.cell-output .cell-output-stderr}\n```\nError importing in API mode: ImportError('On Windows, cffi mode \"ANY\" is only \"ABI\".')\nTrying to import in ABI mode.\n```\n:::\n:::\n\n\n::: {#dc0752f2 .cell execution_count=2}\n``` {.python .cell-code}\nimport pandas as pd\n\ntrain = pd.read_parquet(\"../data/train.parquet\")\ntest  = pd.read_parquet(\"../data/test.parquet\")\n\nprint(train.head())\n```\n\n::: {.cell-output .cell-output-stdout}\n```\n   Frequency  Exposure  VehPower  VehAge  DrivAge VehBrand   VehGas  \\\n0        0.0      1.00         6     9.0       43       B1   Diesel   \n1        0.0      0.18         4    16.0       30       B2  Regular   \n2        0.0      0.53         8     3.0       48      B12   Diesel   \n3        0.0      0.08         6    18.0       38    Other  Regular   \n4        0.0      1.00         7     5.0       69       B2  Regular   \n\n   LogDensity                       Region  \n0    9.138522                  Rhone-Alpes  \n1    9.138522                  Rhone-Alpes  \n2    6.336826  Provence-Alpes-Cotes-D'Azur  \n3    8.336151                  Rhone-Alpes  \n4    7.242082                        Other  \n```\n:::\n:::\n\n\n",
+    "supporting": [
+      "demo_py_files"
+    ],
+    "filters": [],
+    "includes": {}
+  }
+}

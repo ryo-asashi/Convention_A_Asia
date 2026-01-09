@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>Maximizing the Interpretation of Black-Box Models</title>
+<title>Python Demo – Maximizing the Interpretation of Black-Box Models</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -20,26 +20,61 @@ ul.task-list li input[type="checkbox"] {
   margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
   vertical-align: middle;
 }
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
 </style>
 
 
-<script src="site_libs/quarto-nav/quarto-nav.js"></script>
-<script src="site_libs/quarto-nav/headroom.min.js"></script>
-<script src="site_libs/clipboard/clipboard.min.js"></script>
-<script src="site_libs/quarto-search/autocomplete.umd.js"></script>
-<script src="site_libs/quarto-search/fuse.min.js"></script>
-<script src="site_libs/quarto-search/quarto-search.js"></script>
-<meta name="quarto:offset" content="./">
-<script src="site_libs/quarto-html/quarto.js" type="module"></script>
-<script src="site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
-<script src="site_libs/quarto-html/popper.min.js"></script>
-<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
-<script src="site_libs/quarto-html/anchor.min.js"></script>
-<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="site_libs/quarto-html/quarto-syntax-highlighting-37eea08aefeeee20ff55810ff984fec1.css" rel="stylesheet" id="quarto-text-highlighting-styles">
-<script src="site_libs/bootstrap/bootstrap.min.js"></script>
-<link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="site_libs/bootstrap/bootstrap-cc63fce9873912f1bbbccf05079cc9ea.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-37eea08aefeeee20ff55810ff984fec1.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap-cc63fce9873912f1bbbccf05079cc9ea.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -78,7 +113,7 @@ ul.task-list li input[type="checkbox"] {
     <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
       <div class="navbar-container container-fluid">
       <div class="navbar-brand-container mx-auto">
-    <a class="navbar-brand" href="./index.html">
+    <a class="navbar-brand" href="../index.html">
     <span class="navbar-title">Maximizing the Interpretation of Black-Box Models</span>
     </a>
   </div>
@@ -89,19 +124,19 @@ ul.task-list li input[type="checkbox"] {
           <div class="collapse navbar-collapse" id="navbarCollapse">
             <ul class="navbar-nav navbar-nav-scroll me-auto">
   <li class="nav-item">
-    <a class="nav-link active" href="./index.html" aria-current="page"> 
+    <a class="nav-link" href="../index.html"> 
 <span class="menu-text">Home</span></a>
   </li>  
   <li class="nav-item">
-    <a class="nav-link" href="./notebooks/dataset.html"> 
+    <a class="nav-link" href="../notebooks/dataset.html"> 
 <span class="menu-text">Dataset</span></a>
   </li>  
   <li class="nav-item">
-    <a class="nav-link" href="./notebooks/demo_r.html"> 
+    <a class="nav-link" href="../notebooks/demo_r.html"> 
 <span class="menu-text">R Demo</span></a>
   </li>  
   <li class="nav-item">
-    <a class="nav-link" href="./notebooks/demo_py.html"> 
+    <a class="nav-link active" href="../notebooks/demo_py.html" aria-current="page"> 
 <span class="menu-text">Python Demo</span></a>
   </li>  
 </ul>
@@ -115,28 +150,15 @@ ul.task-list li input[type="checkbox"] {
 <div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
 <!-- sidebar -->
 <!-- margin-sidebar -->
-    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
-        <nav id="TOC" role="doc-toc" class="toc-active">
-    <h2 id="toc-title">On this page</h2>
-   
-  <ul>
-  <li><a href="#overview" id="toc-overview" class="nav-link active" data-scroll-target="#overview">Overview</a>
-  <ul class="collapse">
-  <li><a href="#key-topics-of-the-presentation" id="toc-key-topics-of-the-presentation" class="nav-link" data-scroll-target="#key-topics-of-the-presentation">Key Topics of the Presentation</a></li>
-  </ul></li>
-  <li><a href="#project-structure" id="toc-project-structure" class="nav-link" data-scroll-target="#project-structure">Project Structure</a></li>
-  <li><a href="#software" id="toc-software" class="nav-link" data-scroll-target="#software">Software</a></li>
-  <li><a href="#acknowledgment-reference" id="toc-acknowledgment-reference" class="nav-link" data-scroll-target="#acknowledgment-reference">Acknowledgment &amp; Reference</a></li>
-  </ul>
-</nav>
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar zindex-bottom">
+        
     </div>
 <!-- main -->
 <main class="content" id="quarto-document-content">
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title">Maximizing the Interpretation of Black-Box Models</h1>
-<p class="subtitle lead">Supplementary Materials for <strong>CONVENTION A | ASIA</strong></p>
+<h1 class="title">Python Demo</h1>
 </div>
 
 
@@ -153,57 +175,45 @@ ul.task-list li input[type="checkbox"] {
 </header>
 
 
-<div class="quarto-figure quarto-figure-right">
-<figure class="figure">
-<p><img src="assets/Logo_Asia.png" class="img-fluid quarto-figure quarto-figure-right figure-img" width="250"></p>
-</figure>
+<div id="a2ff8ac5" class="cell" data-execution_count="1">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> midlearn <span class="im">as</span> mid</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> plotnine <span class="im">import</span> <span class="op">*</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stderr">
+<pre><code>Error importing in API mode: ImportError('On Windows, cffi mode "ANY" is only "ABI".')
+Trying to import in ABI mode.</code></pre>
 </div>
-<section id="overview" class="level2">
-<h2 class="anchored" data-anchor-id="overview">Overview</h2>
-<p>Welcome to the supplementary repository for our presentation <em>Maximizing the Interpretation of Black-Box Models</em> at <strong>CONVENTION A | ASIA</strong>.</p>
-<p>This project demonstrates the application of <strong>Maximum Interpretation Decomposition (MID)</strong>, a novel approach in Interpretable Machine Learning (IML) designed to bridge the gap between high-performance “black-box” models and the transparency requirements of actuarial practice.</p>
-<section id="key-topics-of-the-presentation" class="level3">
-<h3 class="anchored" data-anchor-id="key-topics-of-the-presentation">Key Topics of the Presentation</h3>
-<ul>
-<li><strong>Theoretical Foundation</strong>: Understanding the decomposition logic of complex models into interpretable parts: intercept, first-order main effects, and second-order interaction effects by MID.</li>
-<li><strong>Actuarial Application</strong>: Benchmarking MID using the industry-standard <code>freMTPL2freq</code> dataset using open-source software: <code>midr</code>, <code>midnight</code> (R), and <code>midlearn</code> (Python).</li>
-</ul>
-<hr>
-</section>
-</section>
-<section id="project-structure" class="level2">
-<h2 class="anchored" data-anchor-id="project-structure">Project Structure</h2>
-<p>This Quarto website contains the following sections:</p>
-<ol type="1">
-<li><a href="./notebooks/dataset.html"><strong>Dataset</strong></a>: Data cleaning and feature engineering of the French Motor Third-Party Liability dataset.</li>
-<li><a href="./notebooks/demo_r.html"><strong>R Demo</strong></a>: A demonstration of the <code>midr</code> and <code>midlearn</code> packages in <strong>R</strong>.</li>
-<li><a href="./notebooks/demo_py.html"><strong>Python Demo</strong></a>: A demonstration of the <code>midlearn</code> library, providing a seamless interface for <strong>Python</strong> users.</li>
-</ol>
-<hr>
-</section>
-<section id="software" class="level2">
-<h2 class="anchored" data-anchor-id="software">Software</h2>
-<ul>
-<li><strong>midr</strong>: <a href="https://github.com/ryo-asashi/midr">GitHub</a> / CRAN<br>
-R package for Maximum Interpretation Decomposition in R</li>
-<li><strong>midnight</strong>: <a href="https://github.com/ryo-asashi/midnight">GitHub</a><br>
-R package to integrate midr to the tidymodels ecosystem</li>
-<li><strong>midlearn</strong>: <a href="https://github.com/ryo-asashi/midlearn">GitHub</a> / PyPI<br>
-Python library to integrate midr to the scikit-learn ecosystem</li>
-</ul>
-<hr>
-</section>
-<section id="acknowledgment-reference" class="level2">
-<h2 class="anchored" data-anchor-id="acknowledgment-reference">Acknowledgment &amp; Reference</h2>
-<ul>
-<li><p><strong>CASDatasets</strong>: <a href="">CRAN</a><br>
-This demonstration utilizes the <code>freMTPL2freq</code> dataset from the <code>CASdatasets</code> package.</p></li>
-<li><p><strong>AITools4Actuaries</strong>: Website<strong><br>
-</strong>We would like to acknowledge the project for their foundational work on benchmarking ML models in insurance, which served as a reference, especially for our data preprocessing pipeline.</p></li>
-</ul>
+</div>
+<div id="dc0752f2" class="cell" data-execution_count="2">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>train <span class="op">=</span> pd.read_parquet(<span class="st">"../data/train.parquet"</span>)</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>test  <span class="op">=</span> pd.read_parquet(<span class="st">"../data/test.parquet"</span>)</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(train.head())</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>   Frequency  Exposure  VehPower  VehAge  DrivAge VehBrand   VehGas  \
+0        0.0      1.00         6     9.0       43       B1   Diesel   
+1        0.0      0.18         4    16.0       30       B2  Regular   
+2        0.0      0.53         8     3.0       48      B12   Diesel   
+3        0.0      0.08         6    18.0       38    Other  Regular   
+4        0.0      1.00         7     5.0       69       B2  Regular   
+
+   LogDensity                       Region  
+0    9.138522                  Rhone-Alpes  
+1    9.138522                  Rhone-Alpes  
+2    6.336826  Provence-Alpes-Cotes-D'Azur  
+3    8.336151                  Rhone-Alpes  
+4    7.242082                        Other  </code></pre>
+</div>
+</div>
 
 
-</section>
 
 </main> <!-- /main -->
 <script id="quarto-html-after-body" type="application/javascript">
