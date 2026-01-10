@@ -1,6 +1,6 @@
 ---
 title: "Maximizing the Interpretation of Black-Box Models"
-subtitle: "Supplementary Materials for **CONVENTION A | ASIA**"
+subtitle: "Supplementary Materials for CONVENTION A | ASIA"
 ---
 
 ![](assets/Logo_Asia.png){fig-align="right" width="250px"}
@@ -14,7 +14,7 @@ This project demonstrates the application of **Maximum Interpretation Decomposit
 ### Key Topics of the Presentation
 
 -   **Theoretical Foundation**: Understanding the decomposition logic of complex models into interpretable parts: intercept, first-order main effects, and second-order interaction effects by MID.
--   **Actuarial Application**: Benchmarking MID using the industry-standard `freMTPL2freq` dataset using open-source software: `midr`, `midnight` (R), and `midlearn` (Python).
+-   **Actuarial Application**: Benchmarking MID using the industry-standard `freMTPL2freq` dataset using open-source software: `{midr}`, `{midnight}` (R), and `{midlearn}` (Python).
 
 ------------------------------------------------------------------------
 
@@ -23,26 +23,26 @@ This project demonstrates the application of **Maximum Interpretation Decomposit
 This Quarto website contains the following sections:
 
 1.  [**Dataset**](./notebooks/dataset.html): Data cleaning and feature engineering of the French Motor Third-Party Liability dataset.
-2.  [**R Demo**](./notebooks/demo_r.html): A demonstration of the `midr` and `midlearn` packages in **R**.
-3.  [**Python Demo**](./notebooks/demo_py.html): A demonstration of the `midlearn` library, providing a seamless interface for **Python** users.
+2.  [**R Demo**](./notebooks/demo_r.html): A demonstration of the `{midr}` and `{midlearn}` packages in **R**.
+3.  [**Python Demo**](./notebooks/demo_py.html): A demonstration of the `{midlearn}` library, providing a seamless interface for **Python** users.
 
 ------------------------------------------------------------------------
 
 ## Software
 
--   **midr**: [GitHub](https://github.com/ryo-asashi/midr) / CRAN\
+-   **{midr}**: [GitHub](https://github.com/ryo-asashi/midr) / [CRAN](https://CRAN.R-project.org/package=midr)\
     R package for Maximum Interpretation Decomposition in R
--   **midnight**: [GitHub](https://github.com/ryo-asashi/midnight)\
-    R package to integrate midr to the tidymodels ecosystem
--   **midlearn**: [GitHub](https://github.com/ryo-asashi/midlearn) / PyPI\
-    Python library to integrate midr to the scikit-learn ecosystem
+-   **{midnight}**: [GitHub](https://github.com/ryo-asashi/midnight)\
+    R package to integrate `{midr}` to the `{tidymodels}` ecosystem
+-   **{midlearn}**: [GitHub](https://github.com/ryo-asashi/midlearn) / [PyPI](https://pypi.org/project/midlearn/)\
+    Python library to integrate `{midr}` to the `{scikit-learn}` ecosystem
 
 ------------------------------------------------------------------------
 
 ## Acknowledgment & Reference
 
--   **CASDatasets**: [CRAN]() \
-    This demonstration utilizes the `freMTPL2freq` dataset from the `CASdatasets` package.
+-   **{CASdatasets}**: [CRAN](https://github.com/ryo-asashi/CASdatasets)\
+    This demonstration utilizes the `freMTPL2freq` dataset from the `{CASdatasets}` package.
 
--   **AITools4Actuaries**: Website**\
-    **We would like to acknowledge the project for their foundational work on benchmarking ML models in insurance, which served as a reference, especially for our data preprocessing pipeline.
+-   **AITools4Actuaries**: [Website](https://aitools4actuaries.com/)\
+    We would like to acknowledge the project for their foundational work on benchmarking ML models in insurance, which served as a reference, especially for our data preprocessing pipeline.

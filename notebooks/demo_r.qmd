@@ -1,154 +1,159 @@
 ---
-title: "Interpretation by Global Surrogate Modeling with {**midr**}"
-subtitle: "Convention A | Asia"
+title: "Building Surrogate Models with {midr}"
 ---
 
-```{r}
+```{r, message=FALSE, warning=FALSE}
+# data manipuration
 library(arrow)
+
+# predictive modeling
+library(gam)
+library(lightgbm)
+
+# surrogate modeling
 library(midr)
 library(midnight)
+
+# visualization
 library(ggplot2)
-```
+library(gridExtra)
 
-
-```{r}
+# load training and testin datasets
 train <- read_parquet("../data/train.parquet")
 test  <- read_parquet("../data/test.parquet")
+train <- train[sample(nrow(train), 50000), ]
 ```
 
-```{r}
-library(splines)
+## GAM: An Interpretable Model
 
-fit_glm <- glm(
-  Frequency ~ VehPower + VehAge + ns(DrivAge, df = 5) + VehBrand + VehGas + LogDensity + Region,
+```{r}
+fit_gam <- gam(
+  Frequency ~ s(VehPower) + s(VehAge) + s(DrivAge) + s(LogDensity) +
+              VehBrand + VehGas + Region,
   data = train,
   weights = Exposure,
-  family = quasipoisson()
+  family = quasipoisson(link = "log")
 )
-
-summary(fit_glm)
+summary(fit_gam)
 ```
 
+### Surrogate Modeling for GAM
+
 ```{r}
-mid_glm <- interpret(
-  Frequency ~
-    DrivAge + LogDensity + VehAge + VehPower +
-    Region + VehBrand + VehGas,
+mid_gam <- interpret(
+  Frequency ~ VehPower + VehAge + DrivAge + LogDensity +
+              VehBrand + VehGas + Region,
   train,
   weights = Exposure,
   link = "log",
-  model = fit_glm,
-  verbosity = 3
+  model = fit_gam
+)
+summary(mid_gam)
+```
+
+### Evaluation of Surrogate Model Fidelity
+
+Typically, the R-squared metrics is used to measure the fidelity of surrogate models.
+
+In the summary of the fitted MID model, $1 - R^s$ is referred as **(Working) Uninterpreted Variation Ratio**.
+
+We can confirm how the predictions of the MID surrogate replicates the predictions from the original GAM on the testing dataset.
+
+```{r}
+theme_set(theme_midr("xy"))
+preds_df <- data.frame(
+  fit_gam = predict(fit_gam, test, type = "response"),
+  mid_gam = predict(mid_gam, test, type = "response")
+) 
+sample_id <- sample(nrow(preds_df), 2000)
+p <- ggplot(preds_df[sample_id, ])
+grid.arrange(
+  nrow = 1,
+  p +
+    geom_point(aes(log(fit_gam), log(mid_gam))) +
+    labs(x = "GAM", y = "MID Surrogate",
+         title = "Model Fidelity", subtitle = "Linear predictor"),
+  p +
+    geom_point(aes(log(fit_gam), log(mid_gam))) +
+    labs(x = "GAM", y = "MID Surrogate",
+         title = "", subtitle = "Prediction in the original scale")
 )
 ```
 
+### Visualization of Effects
+
 ```{r}
-summary(mid_glm)
+par.midr(mfrow = c(2, 4))
+termplot(fit_gam)
 ```
 
 ```{r}
-pal <- "#004080"
-gridExtra::grid.arrange(
-  ggmid(mid_glm, "DrivAge", linewidth = 1, color = pal),
-  ggmid(mid_glm, "LogDensity", linewidth = 1, color = pal),
-  ggmid(mid_glm, "VehAge", linewidth = 1, color = pal),
-  ggmid(mid_glm, "VehPower", linewidth = 1, color = pal)
-)
+par.midr(mfrow = c(2, 4))
+mid.plots(mid_gam, engine = "graphics", ylab = "Partial Effect")
 ```
 
 ```{r}
 par.midr(mar = c(1,1,1,1))
-persp(mid_glm, "DrivAge:LogDensity", theta = 135, phi = 30, col = "#00408080")
+persp(mid_gam, "LogDensity:DrivAge", theta = 225, phi = 40, shade = .5)
 ```
 
-```{r}
-imp_glm <- mid.importance(mid_glm, max.nrow = 2000)
-ggmid(imp_glm, "bee", theme = "viridis_r") + theme_midr("y")
-```
+### Feature Importance
 
-```{r}
-### GBM
-X_train <- data.matrix(
-  train |> dplyr::select(-Frequency, -Exposure)
-)
-
-X_test  <- data.matrix(
-  test  |> dplyr::select(-Frequency, -Exposure)
-)
-
-library(lightgbm)
-
-params_lgb <- list(
-  objective = "poisson",
-  learning_rate = 0.02,
-  num_leaves = 31,
-  reg_lambda = 0,
-  reg_alpha = 2,
-  colsample_bynode = 0.8,
-  subsample = 0.8,
-  min_child_samples = 20,
-  min_split_gain = 0.1,
-  poisson_max_delta_step = 0.1
-)
-
-fit_lgb <- lightgbm(
-  data = X_train,
-  label = train$Frequency,
-  weights = train$Exposure,
-  params = params_lgb,
-  nrounds = 200L,
-  verbose = 0L,
-  categorical_feature = c("VehBrand", "VehGas", "Region")
-)
-
-summary(fit_lgb)
-
-fitted_values_lgb <- get.yhat(fit_lgb, X_train)
-```
-
-```{r}
-mid_lgb <- interpret(
-  Frequency ~ (. - Exposure)^2,
-  data = train,
-  weights = Exposure,
-  link = "log",
-  model = fit_lgb,
-  pred.fun = function(model, newdata) fitted_values_lgb,
-  verbosity = 3,
-  lambda = .05
-)
-
-# required 10 GiB
-```
-
-```{r}
-summary(mid_lgb)
-
-```
-
-```{r}
-
-gridExtra::grid.arrange(
-  ggmid(mid_lgb, "DrivAge", linewidth = 1, color = pal),
-  ggmid(mid_lgb, "LogDensity", linewidth = 1, color = pal),
-  ggmid(mid_lgb, "VehAge", linewidth = 1, color = pal),
-  ggmid(mid_lgb, "VehPower", linewidth = 1, color = pal)
-)
-```
-
-```{r}
-rotate <- theme(axis.text.x = element_text(angle = 90))
-gridExtra::grid.arrange(
+```{r, message = FALSE}
+imp_gam <- mid.importance(mid_gam, data = train, max.nrow = 2000)
+grid.arrange(
   nrow = 1,
-  ggmid(mid_lgb, "Region") + rotate,
-  ggmid(mid_lgb, "VehBrand") + rotate
+  ggmid(imp_gam, fill = "steelblue") +
+    labs(title = "Feature Importance",
+         subtitle = "Average absolute effect per feature"),
+  ggmid(imp_gam, type = "beeswarm", theme = "mako@div") +
+    labs(title = "",
+         subtitle = "Distribution of effect per feature") +
+    theme(legend.position = "none")
 )
 ```
 
-```{r}
-imp_lgb <- mid.importance(mid_lgb, data = train, max.nrow = 2000)
-ggmid(imp_lgb, "heatmap")
-ggmid(imp_lgb, "bee", max.nterms = 15, theme = "viridis_r")
+### Conditional Expectation
+
+```{r, message = FALSE}
+ice_gam_link <- mid.conditional(mid_gam, type = "link", variable = "DrivAge")
+ice_gam <- mid.conditional(mid_gam, variable = "DrivAge")
+grid.arrange(
+  nrow = 1,
+  ggmid(ice_gam_link, var.color = LogDensity) +
+    theme(legend.position = "bottom") +
+    labs(y = "Linear Predictor",
+         title = "Conditional Expectation",
+         subtitle = "Change in linear predictor"),
+  ggmid(ice_gam, type = "centered", var.color = LogDensity) +
+    theme(legend.position = "bottom") +
+    labs(y = "Prediction", title = "",
+         subtitle = "Centered change in original scale")
+)
 ```
 
+### Additive Feature Attribution
+
+```{r}
+set.seed(42)
+row_ids <- sample(nrow(train), 4)
+bd_list <- lapply(
+  row_ids,
+  function(x) {
+    res <- mid.breakdown(mid_gam, train, row = x, format = "%.6s")
+    structure(res, row_id = x)
+  }
+)
+bd_plots <- lapply(
+  bd_list, function(x) {
+    label <- paste0("Row ID: ", attr(x, "row_id"))
+    ggmid(x, theme = "shap") +
+      labs(x = "Linear Predictor", subtitle = label) +
+      theme(legend.position = "none")
+  }
+)
+grid.arrange(grobs = bd_plots)
 ```
+
+## LightGBM: A Black-Box Model with High Performance
+
