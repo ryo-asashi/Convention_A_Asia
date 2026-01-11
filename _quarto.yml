@@ -20,6 +20,7 @@ format:
     theme: flatly
     code-fold: true
     toc: true
+    toc-depth: 3
     number-sections: false
 
 execute:

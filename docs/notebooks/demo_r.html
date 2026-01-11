@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>Building Surrogate Models with {midr} – Maximizing the Interpretation of Black-Box Models</title>
+<title>Surrogate Modeling with MID in R – Maximizing the Interpretation of Black-Box Models</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -184,16 +184,28 @@ window.Quarto = {
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#gam-an-interpretable-model" id="toc-gam-an-interpretable-model" class="nav-link active" data-scroll-target="#gam-an-interpretable-model">GAM: An Interpretable Model</a>
+  <li><a href="#introduction" id="toc-introduction" class="nav-link active" data-scroll-target="#introduction">Introduction</a></li>
+  <li><a href="#interpretable-gam" id="toc-interpretable-gam" class="nav-link" data-scroll-target="#interpretable-gam">Interpretable GAM</a>
   <ul class="collapse">
-  <li><a href="#surrogate-modeling-for-gam" id="toc-surrogate-modeling-for-gam" class="nav-link" data-scroll-target="#surrogate-modeling-for-gam">Surrogate Modeling for GAM</a></li>
-  <li><a href="#evaluation-of-surrogate-model-fidelity" id="toc-evaluation-of-surrogate-model-fidelity" class="nav-link" data-scroll-target="#evaluation-of-surrogate-model-fidelity">Evaluation of Surrogate Model Fidelity</a></li>
-  <li><a href="#visualization-of-effects" id="toc-visualization-of-effects" class="nav-link" data-scroll-target="#visualization-of-effects">Visualization of Effects</a></li>
-  <li><a href="#feature-importance" id="toc-feature-importance" class="nav-link" data-scroll-target="#feature-importance">Feature Importance</a></li>
+  <li><a href="#predictive-modeling" id="toc-predictive-modeling" class="nav-link" data-scroll-target="#predictive-modeling">Predictive Modeling</a></li>
+  <li><a href="#surrogate-modeling" id="toc-surrogate-modeling" class="nav-link" data-scroll-target="#surrogate-modeling">Surrogate Modeling</a></li>
+  <li><a href="#model-fidelity" id="toc-model-fidelity" class="nav-link" data-scroll-target="#model-fidelity">Model Fidelity</a></li>
+  <li><a href="#main-effect" id="toc-main-effect" class="nav-link" data-scroll-target="#main-effect">Main Effect</a></li>
+  <li><a href="#effect-importance" id="toc-effect-importance" class="nav-link" data-scroll-target="#effect-importance">Effect Importance</a></li>
   <li><a href="#conditional-expectation" id="toc-conditional-expectation" class="nav-link" data-scroll-target="#conditional-expectation">Conditional Expectation</a></li>
-  <li><a href="#additive-feature-attribution" id="toc-additive-feature-attribution" class="nav-link" data-scroll-target="#additive-feature-attribution">Additive Feature Attribution</a></li>
+  <li><a href="#additive-attribution" id="toc-additive-attribution" class="nav-link" data-scroll-target="#additive-attribution">Additive Attribution</a></li>
   </ul></li>
-  <li><a href="#lightgbm-a-black-box-model-with-high-performance" id="toc-lightgbm-a-black-box-model-with-high-performance" class="nav-link" data-scroll-target="#lightgbm-a-black-box-model-with-high-performance">LightGBM: A Black-Box Model with High Performance</a></li>
+  <li><a href="#black-box-gbm" id="toc-black-box-gbm" class="nav-link" data-scroll-target="#black-box-gbm">Black-Box GBM</a>
+  <ul class="collapse">
+  <li><a href="#surrogate-modeling-1" id="toc-surrogate-modeling-1" class="nav-link" data-scroll-target="#surrogate-modeling-1">Surrogate Modeling</a></li>
+  <li><a href="#model-fidelity-1" id="toc-model-fidelity-1" class="nav-link" data-scroll-target="#model-fidelity-1">Model Fidelity</a></li>
+  <li><a href="#main-effect-1" id="toc-main-effect-1" class="nav-link" data-scroll-target="#main-effect-1">Main Effect</a></li>
+  <li><a href="#interaction-effect" id="toc-interaction-effect" class="nav-link" data-scroll-target="#interaction-effect">Interaction Effect</a></li>
+  <li><a href="#effect-importance-1" id="toc-effect-importance-1" class="nav-link" data-scroll-target="#effect-importance-1">Effect Importance</a></li>
+  <li><a href="#conditional-expectation-1" id="toc-conditional-expectation-1" class="nav-link" data-scroll-target="#conditional-expectation-1">Conditional Expectation</a></li>
+  <li><a href="#additive-attribution-1" id="toc-additive-attribution-1" class="nav-link" data-scroll-target="#additive-attribution-1">Additive Attribution</a></li>
+  </ul></li>
+  <li><a href="#conclusion" id="toc-conclusion" class="nav-link" data-scroll-target="#conclusion">Conclusion</a></li>
   </ul>
 </nav>
     </div>
@@ -202,7 +214,7 @@ window.Quarto = {
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title">Building Surrogate Models with {midr}</h1>
+<h1 class="title">Surrogate Modeling with MID in R</h1>
 </div>
 
 
@@ -219,43 +231,73 @@ window.Quarto = {
 </header>
 
 
+<section id="introduction" class="level2">
+<h2 class="anchored" data-anchor-id="introduction">Introduction</h2>
+<p>In actuarial practice, balancing predictive performance with model interpretability is a constant challenge. While <strong>Generalized Additive Models (GAMs)</strong> offer inherent transparency, complex black-box models like <strong>Gradient Boosting Models (GBMs)</strong> often provide superior accuracy at the cost of clarity.</p>
+<p>This notebook demonstrates <strong>Maximum Interpretation Decomposition (MID)</strong> using the <code>{midr}</code> package in R. MID serves as a surrogate modeling framework that decomposes complex predictions into interpretable components—main effects and interactions—allowing us to open the black box without sacrificing the predictive power of it.</p>
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># data manipuration</span></span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(arrow)</span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="co"># predictive modeling</span></span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(gam)</span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(lightgbm)</span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="co"># surrogate modeling</span></span>
-<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(midr)</span>
-<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(midnight)</span>
-<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="co"># visualization</span></span>
-<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ggplot2)</span>
-<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(gridExtra)</span>
-<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a><span class="co"># load training and testin datasets</span></span>
-<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>train <span class="ot">&lt;-</span> <span class="fu">read_parquet</span>(<span class="st">"../data/train.parquet"</span>)</span>
-<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>test  <span class="ot">&lt;-</span> <span class="fu">read_parquet</span>(<span class="st">"../data/test.parquet"</span>)</span>
-<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>train <span class="ot">&lt;-</span> train[<span class="fu">sample</span>(<span class="fu">nrow</span>(train), <span class="dv">50000</span>), ]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="co"># predictive modeling</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(gam)</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(lightgbm)</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="co"># surrogate modeling</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(midr)</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(midnight)</span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="co"># visualization</span></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ggplot2)</span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(gridExtra)</span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a><span class="co"># load training and testin datasets</span></span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>train <span class="ot">&lt;-</span> <span class="fu">read_parquet</span>(<span class="st">"../data/train.parquet"</span>)</span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>test  <span class="ot">&lt;-</span> <span class="fu">read_parquet</span>(<span class="st">"../data/test.parquet"</span>)</span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a><span class="co"># cold execution</span></span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>COLD_RUN <span class="ot">&lt;-</span> <span class="cn">TRUE</span></span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (COLD_RUN) {</span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>  <span class="fu">set.seed</span>(<span class="dv">42</span>)</span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a>  train <span class="ot">&lt;-</span> train[<span class="fu">sample</span>(<span class="fu">nrow</span>(train), <span class="dv">50000</span>), ]</span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a>  test  <span class="ot">&lt;-</span> test[<span class="fu">sample</span>(<span class="fu">nrow</span>(test), <span class="dv">50000</span>), ]</span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
-<section id="gam-an-interpretable-model" class="level2">
-<h2 class="anchored" data-anchor-id="gam-an-interpretable-model">GAM: An Interpretable Model</h2>
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>fit_gam <span class="ot">&lt;-</span> <span class="fu">gam</span>(</span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>  Frequency <span class="sc">~</span> <span class="fu">s</span>(VehPower) <span class="sc">+</span> <span class="fu">s</span>(VehAge) <span class="sc">+</span> <span class="fu">s</span>(DrivAge) <span class="sc">+</span> <span class="fu">s</span>(LogDensity) <span class="sc">+</span></span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>              VehBrand <span class="sc">+</span> VehGas <span class="sc">+</span> Region,</span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">data =</span> train,</span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">weights =</span> Exposure,</span>
-<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">family =</span> <span class="fu">quasipoisson</span>(<span class="at">link =</span> <span class="st">"log"</span>)</span>
-<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(fit_gam)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># define loss function</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>mean_poisson_deviance <span class="ot">&lt;-</span> <span class="cf">function</span>(</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>    y_true, y_pred, <span class="at">sample_weight =</span> <span class="fu">rep</span>(<span class="dv">1</span>, <span class="fu">length</span>(y))</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>  ) {</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stopifnot</span>(<span class="fu">all</span>(y_pred <span class="sc">&gt;</span> <span class="dv">0</span>))</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>  resid <span class="ot">&lt;-</span> <span class="fu">ifelse</span>(y_true <span class="sc">&gt;</span> <span class="dv">0</span>, y_true <span class="sc">*</span> <span class="fu">log</span>(y_true <span class="sc">/</span> y_pred), <span class="dv">0</span>)</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>  resid <span class="ot">&lt;-</span> resid <span class="sc">-</span> y_true <span class="sc">+</span> y_pred</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>  <span class="dv">2</span> <span class="sc">*</span> <span class="fu">sum</span>(resid <span class="sc">*</span> sample_weight) <span class="sc">/</span> <span class="fu">sum</span>(sample_weight)</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
+</section>
+<section id="interpretable-gam" class="level2">
+<h2 class="anchored" data-anchor-id="interpretable-gam">Interpretable GAM</h2>
+<p>We begin by fitting a standard GAM to the motor insurance frequency dataset. Since a GAM is already composed of additive smooth functions, it serves as a perfect sanity check for our surrogate modeling approach.</p>
+<section id="predictive-modeling" class="level3">
+<h3 class="anchored" data-anchor-id="predictive-modeling">Predictive Modeling</h3>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>fit_gam <span class="ot">&lt;-</span> <span class="fu">gam</span>(</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>  Frequency <span class="sc">~</span> <span class="fu">s</span>(VehPower) <span class="sc">+</span> <span class="fu">s</span>(VehAge) <span class="sc">+</span> <span class="fu">s</span>(DrivAge) <span class="sc">+</span> <span class="fu">s</span>(LogDensity) <span class="sc">+</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>              VehBrand <span class="sc">+</span> VehGas <span class="sc">+</span> Region,</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">data =</span> train,</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">weights =</span> Exposure,</span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">family =</span> <span class="fu">quasipoisson</span>(<span class="at">link =</span> <span class="st">"log"</span>)</span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(fit_gam)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-stdout">
 <pre><code>
@@ -264,36 +306,36 @@ Call: gam(formula = Frequency ~ s(VehPower) + s(VehAge) + s(DrivAge) +
     data = train, weights = Exposure)
 Deviance Residuals:
     Min      1Q  Median      3Q     Max 
--0.7767 -0.3375 -0.2522 -0.1401 10.8162 
+-0.7346 -0.3492 -0.2640 -0.1436 10.7132 
 
-(Dispersion Parameter for quasipoisson family taken to be 2.0443)
+(Dispersion Parameter for quasipoisson family taken to be 1.7132)
 
-    Null Deviance: 12885.06 on 49999 degrees of freedom
-Residual Deviance: 12550.42 on 49971 degrees of freedom
+    Null Deviance: 13216.45 on 49999 degrees of freedom
+Residual Deviance: 12963.4 on 49971 degrees of freedom
 AIC: NA 
 
 Number of Local Scoring Iterations: NA 
 
 Anova for Parametric Effects
                  Df Sum Sq Mean Sq F value    Pr(&gt;F)    
-s(VehPower)       1     18  17.535  8.5774  0.003405 ** 
-s(VehAge)         1      8   7.891  3.8598  0.049462 *  
-s(DrivAge)        1     88  87.779 42.9388 5.703e-11 ***
-s(LogDensity)     1     81  80.666 39.4593 3.377e-10 ***
-VehBrand          5     26   5.297  2.5913  0.023804 *  
-VehGas            1      7   6.568  3.2129  0.073066 .  
-Region            6     12   1.976  0.9667  0.445957    
-Residuals     49971 102155   2.044                      
+s(VehPower)       1      9   9.385  5.4783   0.01926 *  
+s(VehAge)         1      2   2.002  1.1683   0.27975    
+s(DrivAge)        1     34  33.966 19.8260 8.500e-06 ***
+s(LogDensity)     1    110 109.592 63.9691 1.291e-15 ***
+VehBrand          5     11   2.142  1.2505   0.28245    
+VehGas            1      1   1.274  0.7438   0.38844    
+Region            6     12   2.037  1.1889   0.30869    
+Residuals     49971  85610   1.713                      
 ---
 Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 
 Anova for Nonparametric Effects
               Npar Df  Npar F     Pr(F)    
 (Intercept)                                
-s(VehPower)         3  0.6279   0.59689    
-s(VehAge)           3  2.6376   0.04786 *  
-s(DrivAge)          3 11.5076 1.545e-07 ***
-s(LogDensity)       3  1.6039   0.18612    
+s(VehPower)         3  0.5258    0.6645    
+s(VehAge)           3  0.7300    0.5339    
+s(DrivAge)          3 15.5538 4.146e-10 ***
+s(LogDensity)       3  0.3274    0.8055    
 VehBrand                                   
 VehGas                                     
 Region                                     
@@ -301,20 +343,35 @@ Region
 Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</code></pre>
 </div>
 </div>
-<section id="surrogate-modeling-for-gam" class="level3">
-<h3 class="anchored" data-anchor-id="surrogate-modeling-for-gam">Surrogate Modeling for GAM</h3>
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>mid_gam <span class="ot">&lt;-</span> <span class="fu">interpret</span>(</span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>  Frequency <span class="sc">~</span> VehPower <span class="sc">+</span> VehAge <span class="sc">+</span> DrivAge <span class="sc">+</span> LogDensity <span class="sc">+</span></span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>              VehBrand <span class="sc">+</span> VehGas <span class="sc">+</span> Region,</span>
-<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>  train,</span>
-<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">weights =</span> Exposure,</span>
-<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">link =</span> <span class="st">"log"</span>,</span>
-<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">model =</span> fit_gam</span>
-<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(mid_gam)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># evaluate model</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>pred_fit_gam <span class="ot">&lt;-</span> <span class="fu">predict</span>(fit_gam, test, <span class="at">type =</span> <span class="st">"response"</span>)</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Mean Poisson Deviance:"</span>,</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mean_poisson_deviance</span>(test<span class="sc">$</span>Frequency, pred_fit_gam, test<span class="sc">$</span>Exposure)</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>Mean Poisson Deviance: 0.4895171</code></pre>
+</div>
+</div>
+</section>
+<section id="surrogate-modeling" class="level3">
+<h3 class="anchored" data-anchor-id="surrogate-modeling">Surrogate Modeling</h3>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>mid_gam <span class="ot">&lt;-</span> <span class="fu">interpret</span>(</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>  Frequency <span class="sc">~</span> VehPower <span class="sc">+</span> VehAge <span class="sc">+</span> DrivAge <span class="sc">+</span> LogDensity <span class="sc">+</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>              VehBrand <span class="sc">+</span> VehGas <span class="sc">+</span> Region,</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>  train,</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">weights =</span> Exposure,</span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">link =</span> <span class="st">"log"</span>,</span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">model =</span> fit_gam</span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(mid_gam)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-stdout">
 <pre><code>
@@ -327,11 +384,11 @@ Link: log
 
 Uninterpreted Variation Ratio:
    working   response 
-0.00027850 0.00043825 
+0.00017046 0.00011598 
 
 Working Residuals:
        Min         1Q     Median         3Q        Max 
--0.0620208 -0.0012274 -0.0000731  0.0010569  0.0493120 
+-0.0338466 -0.0008416 -0.0000489  0.0007905  0.0327146 
 
 Encoding:
            main.effect
@@ -345,63 +402,33 @@ Region       factor(7)</code></pre>
 </div>
 </div>
 </section>
-<section id="evaluation-of-surrogate-model-fidelity" class="level3">
-<h3 class="anchored" data-anchor-id="evaluation-of-surrogate-model-fidelity">Evaluation of Surrogate Model Fidelity</h3>
-<p>Typically, the R-squared metrics is used to measure the fidelity of surrogate models.</p>
-<p>In the summary of the fitted MID model, <span class="math inline">\(1 - R^s\)</span> is referred as <strong>(Working) Uninterpreted Variation Ratio</strong>.</p>
-<p>We can confirm how the predictions of the MID surrogate replicates the predictions from the original GAM on the testing dataset.</p>
+<section id="model-fidelity" class="level3">
+<h3 class="anchored" data-anchor-id="model-fidelity">Model Fidelity</h3>
+<p>After wrapping the GAM with the <code>interpret()</code> function, we evaluate the Model Fidelity. In the MID framework, the (Working) Uninterpreted Variation Ratio (<span class="math inline">\(1 - R^s\)</span>) quantifies how much of the original model’s logic remains “unexplained.” As shown in the scatter plots, the MID surrogate almost perfectly replicates the GAM’s predictions on the test set, both on the linear predictor and the original response scale.</p>
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="fu">theme_set</span>(<span class="fu">theme_midr</span>(<span class="st">"xy"</span>))</span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>preds_df <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
-<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">fit_gam =</span> <span class="fu">predict</span>(fit_gam, test, <span class="at">type =</span> <span class="st">"response"</span>),</span>
-<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">mid_gam =</span> <span class="fu">predict</span>(mid_gam, test, <span class="at">type =</span> <span class="st">"response"</span>)</span>
-<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>) </span>
-<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>sample_id <span class="ot">&lt;-</span> <span class="fu">sample</span>(<span class="fu">nrow</span>(preds_df), <span class="dv">2000</span>)</span>
-<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>p <span class="ot">&lt;-</span> <span class="fu">ggplot</span>(preds_df[sample_id, ])</span>
-<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a><span class="fu">grid.arrange</span>(</span>
-<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>  <span class="at">nrow =</span> <span class="dv">1</span>,</span>
-<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>  p <span class="sc">+</span></span>
-<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>    <span class="fu">geom_point</span>(<span class="fu">aes</span>(<span class="fu">log</span>(fit_gam), <span class="fu">log</span>(mid_gam))) <span class="sc">+</span></span>
-<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a>    <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">"GAM"</span>, <span class="at">y =</span> <span class="st">"MID Surrogate"</span>,</span>
-<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a>         <span class="at">title =</span> <span class="st">"Model Fidelity"</span>, <span class="at">subtitle =</span> <span class="st">"Linear predictor"</span>),</span>
-<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a>  p <span class="sc">+</span></span>
-<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a>    <span class="fu">geom_point</span>(<span class="fu">aes</span>(<span class="fu">log</span>(fit_gam), <span class="fu">log</span>(mid_gam))) <span class="sc">+</span></span>
-<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a>    <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">"GAM"</span>, <span class="at">y =</span> <span class="st">"MID Surrogate"</span>,</span>
-<span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a>         <span class="at">title =</span> <span class="st">""</span>, <span class="at">subtitle =</span> <span class="st">"Prediction in the original scale"</span>)</span>
-<span id="cb6-18"><a href="#cb6-18" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</details>
-<div class="cell-output-display">
-<div>
-<figure class="figure">
-<p><img src="demo_r_files/figure-html/unnamed-chunk-4-1.png" class="img-fluid figure-img" width="672"></p>
-</figure>
-</div>
-</div>
-</div>
-</section>
-<section id="visualization-of-effects" class="level3">
-<h3 class="anchored" data-anchor-id="visualization-of-effects">Visualization of Effects</h3>
-<div class="cell">
-<details class="code-fold">
-<summary>Code</summary>
-<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="fu">par.midr</span>(<span class="at">mfrow =</span> <span class="fu">c</span>(<span class="dv">2</span>, <span class="dv">4</span>))</span>
-<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="fu">termplot</span>(fit_gam)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</details>
-<div class="cell-output-display">
-<div>
-<figure class="figure">
-<p><img src="demo_r_files/figure-html/unnamed-chunk-5-1.png" class="img-fluid figure-img" width="672"></p>
-</figure>
-</div>
-</div>
-</div>
-<div class="cell">
-<details class="code-fold">
-<summary>Code</summary>
-<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="fu">par.midr</span>(<span class="at">mfrow =</span> <span class="fu">c</span>(<span class="dv">2</span>, <span class="dv">4</span>))</span>
-<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="fu">mid.plots</span>(mid_gam, <span class="at">engine =</span> <span class="st">"graphics"</span>, <span class="at">ylab =</span> <span class="st">"Partial Effect"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="fu">theme_set</span>(<span class="fu">theme_midr</span>(<span class="st">"xy"</span>))</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>pred_mid_gam <span class="ot">=</span> <span class="fu">predict</span>(mid_gam, test, <span class="at">type =</span> <span class="st">"response"</span>)</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">42</span>)</span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>plot_idx <span class="ot">&lt;-</span> <span class="fu">sample</span>(<span class="fu">nrow</span>(test), <span class="dv">2000</span>L)</span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>p <span class="ot">&lt;-</span> <span class="fu">ggplot</span>(</span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">data.frame</span>(<span class="at">fit =</span> pred_fit_gam[plot_idx],</span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>             <span class="at">mid =</span> pred_mid_gam[plot_idx])</span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a><span class="fu">grid.arrange</span>(</span>
+<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a>  <span class="at">nrow =</span> <span class="dv">1</span>,</span>
+<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a>  p <span class="sc">+</span></span>
+<span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a>    <span class="fu">geom_point</span>(<span class="fu">aes</span>(<span class="fu">log</span>(fit), <span class="fu">log</span>(mid))) <span class="sc">+</span></span>
+<span id="cb9-15"><a href="#cb9-15" aria-hidden="true" tabindex="-1"></a>    <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">"GAM"</span>, <span class="at">y =</span> <span class="st">"MID Surrogate"</span>,</span>
+<span id="cb9-16"><a href="#cb9-16" aria-hidden="true" tabindex="-1"></a>         <span class="at">title =</span> <span class="st">"Model Fidelity"</span>, <span class="at">subtitle =</span> <span class="st">"Linear predictor"</span>),</span>
+<span id="cb9-17"><a href="#cb9-17" aria-hidden="true" tabindex="-1"></a>  p <span class="sc">+</span></span>
+<span id="cb9-18"><a href="#cb9-18" aria-hidden="true" tabindex="-1"></a>    <span class="fu">geom_point</span>(<span class="fu">aes</span>(fit, mid)) <span class="sc">+</span></span>
+<span id="cb9-19"><a href="#cb9-19" aria-hidden="true" tabindex="-1"></a>    <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">"GAM"</span>, <span class="at">y =</span> <span class="st">"MID Surrogate"</span>,</span>
+<span id="cb9-20"><a href="#cb9-20" aria-hidden="true" tabindex="-1"></a>         <span class="at">title =</span> <span class="st">""</span>, <span class="at">subtitle =</span> <span class="st">"Prediction in the original scale"</span>)</span>
+<span id="cb9-21"><a href="#cb9-21" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output-display">
 <div>
@@ -411,11 +438,15 @@ Region       factor(7)</code></pre>
 </div>
 </div>
 </div>
+</section>
+<section id="main-effect" class="level3">
+<h3 class="anchored" data-anchor-id="main-effect">Main Effect</h3>
+<p>A critical step in validating a surrogate model is ensuring that the extracted functional forms (main effects) align with the underlying model’s logic. In the case of a GAM, where effects are explicitly modeled as splines, the MID surrogate should ideally recover these shapes with high fidelity.</p>
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="fu">par.midr</span>(<span class="at">mar =</span> <span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">1</span>,<span class="dv">1</span>,<span class="dv">1</span>))</span>
-<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="fu">persp</span>(mid_gam, <span class="st">"LogDensity:DrivAge"</span>, <span class="at">theta =</span> <span class="dv">225</span>, <span class="at">phi =</span> <span class="dv">40</span>, <span class="at">shade =</span> .<span class="dv">5</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="fu">par.midr</span>(<span class="at">mfrow =</span> <span class="fu">c</span>(<span class="dv">2</span>, <span class="dv">4</span>))</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="fu">termplot</span>(fit_gam)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output-display">
 <div>
@@ -425,23 +456,11 @@ Region       factor(7)</code></pre>
 </div>
 </div>
 </div>
-</section>
-<section id="feature-importance" class="level3">
-<h3 class="anchored" data-anchor-id="feature-importance">Feature Importance</h3>
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>imp_gam <span class="ot">&lt;-</span> <span class="fu">mid.importance</span>(mid_gam, <span class="at">data =</span> train, <span class="at">max.nrow =</span> <span class="dv">2000</span>)</span>
-<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="fu">grid.arrange</span>(</span>
-<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">nrow =</span> <span class="dv">1</span>,</span>
-<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggmid</span>(imp_gam, <span class="at">fill =</span> <span class="st">"steelblue"</span>) <span class="sc">+</span></span>
-<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>    <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"Feature Importance"</span>,</span>
-<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>         <span class="at">subtitle =</span> <span class="st">"Average absolute effect per feature"</span>),</span>
-<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggmid</span>(imp_gam, <span class="at">type =</span> <span class="st">"beeswarm"</span>, <span class="at">theme =</span> <span class="st">"mako@div"</span>) <span class="sc">+</span></span>
-<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>    <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">""</span>,</span>
-<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a>         <span class="at">subtitle =</span> <span class="st">"Distribution of effect per feature"</span>) <span class="sc">+</span></span>
-<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a>    <span class="fu">theme</span>(<span class="at">legend.position =</span> <span class="st">"none"</span>)</span>
-<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="fu">par.midr</span>(<span class="at">mfrow =</span> <span class="fu">c</span>(<span class="dv">2</span>, <span class="dv">4</span>))</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="fu">mid.plots</span>(mid_gam, <span class="at">engine =</span> <span class="st">"graphics"</span>, <span class="at">ylab =</span> <span class="st">"Partial Effect"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output-display">
 <div>
@@ -451,26 +470,11 @@ Region       factor(7)</code></pre>
 </div>
 </div>
 </div>
-</section>
-<section id="conditional-expectation" class="level3">
-<h3 class="anchored" data-anchor-id="conditional-expectation">Conditional Expectation</h3>
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>ice_gam_link <span class="ot">&lt;-</span> <span class="fu">mid.conditional</span>(mid_gam, <span class="at">type =</span> <span class="st">"link"</span>, <span class="at">variable =</span> <span class="st">"DrivAge"</span>)</span>
-<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>ice_gam <span class="ot">&lt;-</span> <span class="fu">mid.conditional</span>(mid_gam, <span class="at">variable =</span> <span class="st">"DrivAge"</span>)</span>
-<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a><span class="fu">grid.arrange</span>(</span>
-<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">nrow =</span> <span class="dv">1</span>,</span>
-<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggmid</span>(ice_gam_link, <span class="at">var.color =</span> LogDensity) <span class="sc">+</span></span>
-<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>    <span class="fu">theme</span>(<span class="at">legend.position =</span> <span class="st">"bottom"</span>) <span class="sc">+</span></span>
-<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>    <span class="fu">labs</span>(<span class="at">y =</span> <span class="st">"Linear Predictor"</span>,</span>
-<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a>         <span class="at">title =</span> <span class="st">"Conditional Expectation"</span>,</span>
-<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a>         <span class="at">subtitle =</span> <span class="st">"Change in linear predictor"</span>),</span>
-<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggmid</span>(ice_gam, <span class="at">type =</span> <span class="st">"centered"</span>, <span class="at">var.color =</span> LogDensity) <span class="sc">+</span></span>
-<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a>    <span class="fu">theme</span>(<span class="at">legend.position =</span> <span class="st">"bottom"</span>) <span class="sc">+</span></span>
-<span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a>    <span class="fu">labs</span>(<span class="at">y =</span> <span class="st">"Prediction"</span>, <span class="at">title =</span> <span class="st">""</span>,</span>
-<span id="cb11-13"><a href="#cb11-13" aria-hidden="true" tabindex="-1"></a>         <span class="at">subtitle =</span> <span class="st">"Centered change in original scale"</span>)</span>
-<span id="cb11-14"><a href="#cb11-14" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="fu">par.midr</span>(<span class="at">mar =</span> <span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">1</span>,<span class="dv">1</span>,<span class="dv">1</span>))</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="fu">persp</span>(mid_gam, <span class="st">"LogDensity:DrivAge"</span>, <span class="at">theta =</span> <span class="dv">225</span>, <span class="at">phi =</span> <span class="dv">40</span>, <span class="at">shade =</span> .<span class="dv">5</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output-display">
 <div>
@@ -481,29 +485,23 @@ Region       factor(7)</code></pre>
 </div>
 </div>
 </section>
-<section id="additive-feature-attribution" class="level3">
-<h3 class="anchored" data-anchor-id="additive-feature-attribution">Additive Feature Attribution</h3>
+<section id="effect-importance" class="level3">
+<h3 class="anchored" data-anchor-id="effect-importance">Effect Importance</h3>
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">42</span>)</span>
-<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>row_ids <span class="ot">&lt;-</span> <span class="fu">sample</span>(<span class="fu">nrow</span>(train), <span class="dv">4</span>)</span>
-<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>bd_list <span class="ot">&lt;-</span> <span class="fu">lapply</span>(</span>
-<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>  row_ids,</span>
-<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>  <span class="cf">function</span>(x) {</span>
-<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>    res <span class="ot">&lt;-</span> <span class="fu">mid.breakdown</span>(mid_gam, train, <span class="at">row =</span> x, <span class="at">format =</span> <span class="st">"%.6s"</span>)</span>
-<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a>    <span class="fu">structure</span>(res, <span class="at">row_id =</span> x)</span>
-<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a>bd_plots <span class="ot">&lt;-</span> <span class="fu">lapply</span>(</span>
-<span id="cb12-11"><a href="#cb12-11" aria-hidden="true" tabindex="-1"></a>  bd_list, <span class="cf">function</span>(x) {</span>
-<span id="cb12-12"><a href="#cb12-12" aria-hidden="true" tabindex="-1"></a>    label <span class="ot">&lt;-</span> <span class="fu">paste0</span>(<span class="st">"Row ID: "</span>, <span class="fu">attr</span>(x, <span class="st">"row_id"</span>))</span>
-<span id="cb12-13"><a href="#cb12-13" aria-hidden="true" tabindex="-1"></a>    <span class="fu">ggmid</span>(x, <span class="at">theme =</span> <span class="st">"shap"</span>) <span class="sc">+</span></span>
-<span id="cb12-14"><a href="#cb12-14" aria-hidden="true" tabindex="-1"></a>      <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">"Linear Predictor"</span>, <span class="at">subtitle =</span> label) <span class="sc">+</span></span>
-<span id="cb12-15"><a href="#cb12-15" aria-hidden="true" tabindex="-1"></a>      <span class="fu">theme</span>(<span class="at">legend.position =</span> <span class="st">"none"</span>)</span>
-<span id="cb12-16"><a href="#cb12-16" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb12-17"><a href="#cb12-17" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb12-18"><a href="#cb12-18" aria-hidden="true" tabindex="-1"></a><span class="fu">grid.arrange</span>(<span class="at">grobs =</span> bd_plots)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>imp_gam <span class="ot">&lt;-</span> <span class="fu">mid.importance</span>(mid_gam, <span class="at">data =</span> train, <span class="at">max.nrow =</span> <span class="dv">2000</span>)</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a><span class="fu">grid.arrange</span>(</span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">nrow =</span> <span class="dv">1</span>, <span class="at">widths =</span> <span class="fu">c</span>(<span class="dv">5</span>, <span class="dv">4</span>),</span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggmid</span>(imp_gam, <span class="at">fill =</span> <span class="st">"steelblue"</span>) <span class="sc">+</span></span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>    <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"Effect Importance"</span>,</span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>         <span class="at">subtitle =</span> <span class="st">"Average absolute effect per feature"</span>),</span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggmid</span>(imp_gam, <span class="at">type =</span> <span class="st">"beeswarm"</span>, <span class="at">theme =</span> <span class="st">"mako@div"</span>) <span class="sc">+</span></span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a>    <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">""</span>,</span>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a>         <span class="at">subtitle =</span> <span class="st">"Distribution of effect per feature"</span>) <span class="sc">+</span></span>
+<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a>    <span class="fu">scale_y_discrete</span>(<span class="at">labels =</span> <span class="cn">NULL</span>) <span class="sc">+</span></span>
+<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a>    <span class="fu">theme</span>(<span class="at">legend.position =</span> <span class="st">"none"</span>)</span>
+<span id="cb13-12"><a href="#cb13-12" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output-display">
 <div>
@@ -514,9 +512,378 @@ Region       factor(7)</code></pre>
 </div>
 </div>
 </section>
+<section id="conditional-expectation" class="level3">
+<h3 class="anchored" data-anchor-id="conditional-expectation">Conditional Expectation</h3>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>ice_gam_link <span class="ot">&lt;-</span> <span class="fu">mid.conditional</span>(mid_gam, <span class="at">type =</span> <span class="st">"link"</span>, <span class="at">variable =</span> <span class="st">"DrivAge"</span>)</span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>ice_gam <span class="ot">&lt;-</span> <span class="fu">mid.conditional</span>(mid_gam, <span class="at">variable =</span> <span class="st">"DrivAge"</span>)</span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a><span class="fu">grid.arrange</span>(</span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">nrow =</span> <span class="dv">1</span>,</span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggmid</span>(ice_gam_link, <span class="at">var.color =</span> LogDensity) <span class="sc">+</span></span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>    <span class="fu">theme</span>(<span class="at">legend.position =</span> <span class="st">"bottom"</span>) <span class="sc">+</span></span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>    <span class="fu">labs</span>(<span class="at">y =</span> <span class="st">"Linear Predictor"</span>,</span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a>         <span class="at">title =</span> <span class="st">"Conditional Expectation"</span>,</span>
+<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a>         <span class="at">subtitle =</span> <span class="st">"Change in linear predictor"</span>),</span>
+<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggmid</span>(ice_gam, <span class="at">type =</span> <span class="st">"centered"</span>, <span class="at">var.color =</span> LogDensity) <span class="sc">+</span></span>
+<span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a>    <span class="fu">theme</span>(<span class="at">legend.position =</span> <span class="st">"bottom"</span>) <span class="sc">+</span></span>
+<span id="cb14-12"><a href="#cb14-12" aria-hidden="true" tabindex="-1"></a>    <span class="fu">labs</span>(<span class="at">y =</span> <span class="st">"Prediction"</span>, <span class="at">title =</span> <span class="st">""</span>,</span>
+<span id="cb14-13"><a href="#cb14-13" aria-hidden="true" tabindex="-1"></a>         <span class="at">subtitle =</span> <span class="st">"Centered change in original scale"</span>)</span>
+<span id="cb14-14"><a href="#cb14-14" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="demo_r_files/figure-html/unnamed-chunk-11-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
 </section>
-<section id="lightgbm-a-black-box-model-with-high-performance" class="level2">
-<h2 class="anchored" data-anchor-id="lightgbm-a-black-box-model-with-high-performance">LightGBM: A Black-Box Model with High Performance</h2>
+<section id="additive-attribution" class="level3">
+<h3 class="anchored" data-anchor-id="additive-attribution">Additive Attribution</h3>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">42</span>)</span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>row_ids <span class="ot">&lt;-</span> <span class="fu">sort</span>(<span class="fu">sample</span>(<span class="fu">nrow</span>(train), <span class="dv">4</span>))</span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>bd_list <span class="ot">&lt;-</span> <span class="fu">lapply</span>(</span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>  row_ids,</span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>  <span class="cf">function</span>(x) {</span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>    res <span class="ot">&lt;-</span> <span class="fu">mid.breakdown</span>(mid_gam, train, <span class="at">row =</span> x, <span class="at">format =</span> <span class="st">"%.6s"</span>)</span>
+<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a>    <span class="fu">structure</span>(res, <span class="at">row_id =</span> x)</span>
+<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb15-10"><a href="#cb15-10" aria-hidden="true" tabindex="-1"></a>bd_plots <span class="ot">&lt;-</span> <span class="fu">lapply</span>(</span>
+<span id="cb15-11"><a href="#cb15-11" aria-hidden="true" tabindex="-1"></a>  bd_list, <span class="cf">function</span>(x) {</span>
+<span id="cb15-12"><a href="#cb15-12" aria-hidden="true" tabindex="-1"></a>    label <span class="ot">&lt;-</span> <span class="fu">paste0</span>(<span class="st">"Breakdown of Row "</span>, <span class="fu">attr</span>(x, <span class="st">"row_id"</span>))</span>
+<span id="cb15-13"><a href="#cb15-13" aria-hidden="true" tabindex="-1"></a>    <span class="fu">ggmid</span>(x, <span class="at">theme =</span> <span class="st">"shap"</span>) <span class="sc">+</span></span>
+<span id="cb15-14"><a href="#cb15-14" aria-hidden="true" tabindex="-1"></a>      <span class="fu">labs</span>(<span class="at">x =</span> <span class="cn">NULL</span>, <span class="at">subtitle =</span> label) <span class="sc">+</span></span>
+<span id="cb15-15"><a href="#cb15-15" aria-hidden="true" tabindex="-1"></a>      <span class="fu">theme</span>(<span class="at">legend.position =</span> <span class="st">"none"</span>)</span>
+<span id="cb15-16"><a href="#cb15-16" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb15-17"><a href="#cb15-17" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb15-18"><a href="#cb15-18" aria-hidden="true" tabindex="-1"></a><span class="fu">grid.arrange</span>(<span class="at">grobs =</span> bd_plots)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="demo_r_files/figure-html/unnamed-chunk-12-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
+</section>
+<section id="black-box-gbm" class="level2">
+<h2 class="anchored" data-anchor-id="black-box-gbm">Black-Box GBM</h2>
+<p>Next, we train a LightGBM model. While more powerful, its tree-based structure makes it difficult to explain the relationship between inputs and outputs directly.</p>
+<p>We apply MID to the LightGBM model, specifically allowing for second-order interactions (<code>^ 2</code>) in the formula. This allows the surrogate to capture joint effects that a simple additive model would miss.</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>valid_idx <span class="ot">&lt;-</span> <span class="fu">seq_len</span>(<span class="fu">floor</span>(<span class="fu">nrow</span>(train) <span class="sc">*</span> <span class="fl">0.2</span>))</span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>dtrain <span class="ot">&lt;-</span> <span class="fu">lgb.Dataset</span>(</span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">data.matrix</span>(<span class="fu">select</span>(train[<span class="sc">-</span>valid_idx, ], <span class="sc">-</span>Frequency, <span class="sc">-</span>Exposure)),</span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">label =</span> train<span class="sc">$</span>Frequency[<span class="sc">-</span>valid_idx],</span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">weight =</span> train<span class="sc">$</span>Exposure[<span class="sc">-</span>valid_idx],</span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">categorical_feature =</span> <span class="fu">c</span>(<span class="st">"VehBrand"</span>, <span class="st">"VehGas"</span>, <span class="st">"Region"</span>)</span>
+<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a>dvalid <span class="ot">&lt;-</span> <span class="fu">lgb.Dataset.create.valid</span>(</span>
+<span id="cb16-9"><a href="#cb16-9" aria-hidden="true" tabindex="-1"></a>  dtrain,</span>
+<span id="cb16-10"><a href="#cb16-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">data.matrix</span>(<span class="fu">select</span>(train[ valid_idx, ], <span class="sc">-</span>Frequency, <span class="sc">-</span>Exposure)),</span>
+<span id="cb16-11"><a href="#cb16-11" aria-hidden="true" tabindex="-1"></a>  <span class="at">label =</span> train<span class="sc">$</span>Frequency[ valid_idx],</span>
+<span id="cb16-12"><a href="#cb16-12" aria-hidden="true" tabindex="-1"></a>  <span class="at">weight =</span> train<span class="sc">$</span>Exposure[ valid_idx]</span>
+<span id="cb16-13"><a href="#cb16-13" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb16-14"><a href="#cb16-14" aria-hidden="true" tabindex="-1"></a>params_lgb <span class="ot">&lt;-</span> <span class="fu">list</span>(</span>
+<span id="cb16-15"><a href="#cb16-15" aria-hidden="true" tabindex="-1"></a>  <span class="at">objective =</span> <span class="st">"poisson"</span>,</span>
+<span id="cb16-16"><a href="#cb16-16" aria-hidden="true" tabindex="-1"></a>  <span class="at">learning_rate =</span> <span class="fl">0.005</span>,</span>
+<span id="cb16-17"><a href="#cb16-17" aria-hidden="true" tabindex="-1"></a>  <span class="at">num_leaves =</span> <span class="dv">10</span>,</span>
+<span id="cb16-18"><a href="#cb16-18" aria-hidden="true" tabindex="-1"></a>  <span class="at">reg_lambda =</span> <span class="dv">1</span>,</span>
+<span id="cb16-19"><a href="#cb16-19" aria-hidden="true" tabindex="-1"></a>  <span class="at">reg_alpha =</span> <span class="dv">1</span>,</span>
+<span id="cb16-20"><a href="#cb16-20" aria-hidden="true" tabindex="-1"></a>  <span class="at">colsample_bynode =</span> <span class="fl">0.8</span>,</span>
+<span id="cb16-21"><a href="#cb16-21" aria-hidden="true" tabindex="-1"></a>  <span class="at">subsample =</span> <span class="fl">0.8</span>,</span>
+<span id="cb16-22"><a href="#cb16-22" aria-hidden="true" tabindex="-1"></a>  <span class="at">min_child_samples =</span> <span class="dv">20</span>,</span>
+<span id="cb16-23"><a href="#cb16-23" aria-hidden="true" tabindex="-1"></a>  <span class="at">min_split_gain =</span> <span class="fl">0.1</span>,</span>
+<span id="cb16-24"><a href="#cb16-24" aria-hidden="true" tabindex="-1"></a>  <span class="at">poisson_max_delta_step =</span> <span class="fl">0.1</span></span>
+<span id="cb16-25"><a href="#cb16-25" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb16-26"><a href="#cb16-26" aria-hidden="true" tabindex="-1"></a>fit_lgb <span class="ot">&lt;-</span> <span class="fu">lgb.train</span>(</span>
+<span id="cb16-27"><a href="#cb16-27" aria-hidden="true" tabindex="-1"></a>  <span class="at">params =</span> params_lgb,</span>
+<span id="cb16-28"><a href="#cb16-28" aria-hidden="true" tabindex="-1"></a>  <span class="at">data =</span> dtrain,</span>
+<span id="cb16-29"><a href="#cb16-29" aria-hidden="true" tabindex="-1"></a>  <span class="at">nrounds =</span> <span class="dv">1000</span>L,</span>
+<span id="cb16-30"><a href="#cb16-30" aria-hidden="true" tabindex="-1"></a>  <span class="at">valids =</span> <span class="fu">list</span>(<span class="at">eval =</span> dvalid),</span>
+<span id="cb16-31"><a href="#cb16-31" aria-hidden="true" tabindex="-1"></a>  <span class="at">early_stopping_round =</span> <span class="dv">20</span>L,</span>
+<span id="cb16-32"><a href="#cb16-32" aria-hidden="true" tabindex="-1"></a>  <span class="at">verbose =</span> <span class="dv">0</span>L</span>
+<span id="cb16-33"><a href="#cb16-33" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb16-34"><a href="#cb16-34" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(fit_lgb)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>LightGBM Model (432 trees)
+Objective: poisson
+Fitted to dataset with 7 columns</code></pre>
+</div>
+</div>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="co"># evaluate model</span></span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>pred_fit_lgb <span class="ot">&lt;-</span> <span class="fu">predict</span>(</span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>  fit_lgb, <span class="fu">data.matrix</span>(<span class="fu">select</span>(test, <span class="sc">-</span>Frequency, <span class="sc">-</span>Exposure))</span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(</span>
+<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Mean Poisson Deviance:"</span>,</span>
+<span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mean_poisson_deviance</span>(test<span class="sc">$</span>Frequency, pred_fit_lgb, test<span class="sc">$</span>Exposure)</span>
+<span id="cb18-8"><a href="#cb18-8" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>Mean Poisson Deviance: 0.4891941</code></pre>
+</div>
+</div>
+<section id="surrogate-modeling-1" class="level3">
+<h3 class="anchored" data-anchor-id="surrogate-modeling-1">Surrogate Modeling</h3>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>mid_lgb <span class="ot">&lt;-</span> <span class="fu">interpret</span>(</span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>  Frequency <span class="sc">~</span> (VehPower <span class="sc">+</span> VehAge <span class="sc">+</span> DrivAge <span class="sc">+</span> LogDensity <span class="sc">+</span></span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>               VehBrand <span class="sc">+</span> VehGas <span class="sc">+</span> Region) <span class="sc">^</span> <span class="dv">2</span>,</span>
+<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a>  train,</span>
+<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">lambda =</span> <span class="fl">0.5</span>,</span>
+<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">weights =</span> Exposure,</span>
+<span id="cb20-7"><a href="#cb20-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">link =</span> <span class="st">"log"</span>,</span>
+<span id="cb20-8"><a href="#cb20-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">model =</span> fit_lgb,</span>
+<span id="cb20-9"><a href="#cb20-9" aria-hidden="true" tabindex="-1"></a>  <span class="at">pred.fun =</span> <span class="cf">function</span>(model, data) {</span>
+<span id="cb20-10"><a href="#cb20-10" aria-hidden="true" tabindex="-1"></a>    newdata <span class="ot">&lt;-</span> <span class="fu">data.matrix</span>(<span class="fu">select</span>(data, <span class="sc">-</span>Frequency, <span class="sc">-</span>Exposure))</span>
+<span id="cb20-11"><a href="#cb20-11" aria-hidden="true" tabindex="-1"></a>    <span class="fu">predict</span>(model, newdata)</span>
+<span id="cb20-12"><a href="#cb20-12" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb20-13"><a href="#cb20-13" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb20-14"><a href="#cb20-14" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(mid_lgb)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Call:
+interpret(formula = Frequency ~ (VehPower + VehAge + DrivAge +
+ LogDensity + VehBrand + VehGas + Region)^2, data = train,
+ model = fit_lgb, pred.fun = function(model, data) {
+ newdata &lt;- data.matrix(select(data, -Frequency, -Exposure))
+ predict(model, newdata)
+ }, weights = Exposure, lambda = 0.5, link = "log")
+
+Link: log
+
+Uninterpreted Variation Ratio:
+ working response 
+0.091418 0.128929 
+
+Working Residuals:
+      Min        1Q    Median        3Q       Max 
+-0.442868 -0.039610 -0.001806  0.036518  0.778933 
+
+Encoding:
+           main.effect interaction
+VehPower     linear(9)   linear(5)
+VehAge      linear(18)   linear(5)
+DrivAge     linear(25)   linear(5)
+LogDensity  linear(25)   linear(5)
+VehBrand     factor(6)   factor(6)
+VehGas       factor(2)   factor(2)
+Region       factor(7)   factor(7)</code></pre>
+</div>
+</div>
+</section>
+<section id="model-fidelity-1" class="level3">
+<h3 class="anchored" data-anchor-id="model-fidelity-1">Model Fidelity</h3>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb22"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="fu">theme_set</span>(<span class="fu">theme_midr</span>(<span class="st">"xy"</span>))</span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>pred_mid_lgb <span class="ot">=</span> <span class="fu">predict</span>(mid_lgb, test, <span class="at">type =</span> <span class="st">"response"</span>)</span>
+<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a><span class="co"># set.seed(42)</span></span>
+<span id="cb22-5"><a href="#cb22-5" aria-hidden="true" tabindex="-1"></a><span class="co"># plot_idx &lt;- sample(nrow(test), 2000L)</span></span>
+<span id="cb22-6"><a href="#cb22-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-7"><a href="#cb22-7" aria-hidden="true" tabindex="-1"></a>p <span class="ot">&lt;-</span> <span class="fu">ggplot</span>(</span>
+<span id="cb22-8"><a href="#cb22-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">data.frame</span>(<span class="at">fit =</span> pred_fit_lgb[plot_idx],</span>
+<span id="cb22-9"><a href="#cb22-9" aria-hidden="true" tabindex="-1"></a>             <span class="at">mid =</span> pred_mid_lgb[plot_idx])</span>
+<span id="cb22-10"><a href="#cb22-10" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb22-11"><a href="#cb22-11" aria-hidden="true" tabindex="-1"></a><span class="fu">grid.arrange</span>(</span>
+<span id="cb22-12"><a href="#cb22-12" aria-hidden="true" tabindex="-1"></a>  <span class="at">nrow =</span> <span class="dv">1</span>,</span>
+<span id="cb22-13"><a href="#cb22-13" aria-hidden="true" tabindex="-1"></a>  p <span class="sc">+</span></span>
+<span id="cb22-14"><a href="#cb22-14" aria-hidden="true" tabindex="-1"></a>    <span class="fu">geom_point</span>(<span class="fu">aes</span>(<span class="fu">log</span>(fit), <span class="fu">log</span>(mid))) <span class="sc">+</span></span>
+<span id="cb22-15"><a href="#cb22-15" aria-hidden="true" tabindex="-1"></a>    <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">"LightGBM"</span>, <span class="at">y =</span> <span class="st">"MID Surrogate"</span>,</span>
+<span id="cb22-16"><a href="#cb22-16" aria-hidden="true" tabindex="-1"></a>         <span class="at">title =</span> <span class="st">"Model Fidelity"</span>, <span class="at">subtitle =</span> <span class="st">"Linear predictor"</span>),</span>
+<span id="cb22-17"><a href="#cb22-17" aria-hidden="true" tabindex="-1"></a>  p <span class="sc">+</span></span>
+<span id="cb22-18"><a href="#cb22-18" aria-hidden="true" tabindex="-1"></a>    <span class="fu">geom_point</span>(<span class="fu">aes</span>(fit, mid)) <span class="sc">+</span></span>
+<span id="cb22-19"><a href="#cb22-19" aria-hidden="true" tabindex="-1"></a>    <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">"LightGBM"</span>, <span class="at">y =</span> <span class="st">"MID Surrogate"</span>,</span>
+<span id="cb22-20"><a href="#cb22-20" aria-hidden="true" tabindex="-1"></a>         <span class="at">title =</span> <span class="st">""</span>, <span class="at">subtitle =</span> <span class="st">"Prediction in the original scale"</span>)</span>
+<span id="cb22-21"><a href="#cb22-21" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="demo_r_files/figure-html/unnamed-chunk-16-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="main-effect-1" class="level3">
+<h3 class="anchored" data-anchor-id="main-effect-1">Main Effect</h3>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="fu">par.midr</span>(<span class="at">mfrow =</span> <span class="fu">c</span>(<span class="dv">2</span>, <span class="dv">4</span>))</span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a><span class="fu">mid.plots</span>(mid_lgb, <span class="at">engine =</span> <span class="st">"graphics"</span>, <span class="at">ylab =</span> <span class="st">"Partial Effect"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="demo_r_files/figure-html/unnamed-chunk-17-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="interaction-effect" class="level3">
+<h3 class="anchored" data-anchor-id="interaction-effect">Interaction Effect</h3>
+<p>A key strength of <code>{midr}</code> is its ability to isolate and visualize interaction effects:</p>
+<ul>
+<li><p>Interaction Plots: We can visualize specific interactions, such as <code>LogDensity:Region</code>, using <code>ggmid()</code>. This helps identify whether certain geographical regions react differently to population density.</p></li>
+<li><p>Perspective Plots: The <code>persp()</code> function provides a 3D view of these interactions, offering a more intuitive understanding of non-linear surfaces. This S3 method is implemented in <code>{midnight}</code>.</p></li>
+</ul>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="fu">grid.arrange</span>(</span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">nrow =</span> <span class="dv">1</span>, <span class="at">widths =</span> <span class="fu">c</span>(<span class="dv">3</span>, <span class="dv">2</span>),</span>
+<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggmid</span>(mid_lgb, <span class="st">"LogDensity:Region"</span>, <span class="at">type =</span> <span class="st">"data"</span>,</span>
+<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a>        <span class="at">data =</span> train[<span class="dv">1</span><span class="sc">:</span><span class="fl">1e4</span>, ]) <span class="sc">+</span></span>
+<span id="cb24-5"><a href="#cb24-5" aria-hidden="true" tabindex="-1"></a>    <span class="fu">labs</span>(<span class="at">y =</span> <span class="cn">NULL</span>, <span class="at">subtitle =</span> <span class="st">"Interaction Effect"</span>) <span class="sc">+</span></span>
+<span id="cb24-6"><a href="#cb24-6" aria-hidden="true" tabindex="-1"></a>    <span class="fu">theme</span>(<span class="at">legend.position =</span> <span class="st">"bottom"</span>),</span>
+<span id="cb24-7"><a href="#cb24-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggmid</span>(mid_lgb, <span class="st">"LogDensity:Region"</span>, <span class="at">main.effects =</span> <span class="cn">TRUE</span>) <span class="sc">+</span></span>
+<span id="cb24-8"><a href="#cb24-8" aria-hidden="true" tabindex="-1"></a>    <span class="fu">labs</span>(<span class="at">y =</span> <span class="cn">NULL</span>, <span class="at">subtitle =</span> <span class="st">"Total Effect"</span>) <span class="sc">+</span></span>
+<span id="cb24-9"><a href="#cb24-9" aria-hidden="true" tabindex="-1"></a>    <span class="fu">scale_y_discrete</span>(<span class="at">labels =</span> <span class="cn">NULL</span>) <span class="sc">+</span></span>
+<span id="cb24-10"><a href="#cb24-10" aria-hidden="true" tabindex="-1"></a>    <span class="fu">theme</span>(<span class="at">legend.position =</span> <span class="st">"bottom"</span>)</span>
+<span id="cb24-11"><a href="#cb24-11" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="demo_r_files/figure-html/unnamed-chunk-18-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb25"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="fu">par.midr</span>(<span class="at">mar =</span> <span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">1</span>,<span class="dv">1</span>,<span class="dv">1</span>))</span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a><span class="fu">persp</span>(mid_lgb, <span class="st">"LogDensity:Region"</span>, <span class="at">theta =</span> <span class="dv">225</span>, <span class="at">phi =</span> <span class="dv">40</span>, <span class="at">shade =</span> .<span class="dv">5</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="demo_r_files/figure-html/unnamed-chunk-19-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="effect-importance-1" class="level3">
+<h3 class="anchored" data-anchor-id="effect-importance-1">Effect Importance</h3>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb26"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a>imp_lgb <span class="ot">&lt;-</span> <span class="fu">mid.importance</span>(mid_lgb, <span class="at">data =</span> train, <span class="at">max.nrow =</span> <span class="dv">2000</span>)</span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a><span class="fu">grid.arrange</span>(</span>
+<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">nrow =</span> <span class="dv">1</span>, <span class="at">widths =</span> <span class="fu">c</span>(<span class="dv">4</span>, <span class="dv">3</span>),</span>
+<span id="cb26-4"><a href="#cb26-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggmid</span>(imp_lgb, <span class="at">theme =</span> <span class="st">"bluescale@qual"</span>) <span class="sc">+</span></span>
+<span id="cb26-5"><a href="#cb26-5" aria-hidden="true" tabindex="-1"></a>    <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"Effect Importance"</span>,</span>
+<span id="cb26-6"><a href="#cb26-6" aria-hidden="true" tabindex="-1"></a>         <span class="at">subtitle =</span> <span class="st">"Average absolute effect per feature"</span>) <span class="sc">+</span></span>
+<span id="cb26-7"><a href="#cb26-7" aria-hidden="true" tabindex="-1"></a>    <span class="fu">theme</span>(<span class="at">legend.position =</span> <span class="st">"none"</span>),</span>
+<span id="cb26-8"><a href="#cb26-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggmid</span>(imp_lgb, <span class="at">type =</span> <span class="st">"beeswarm"</span>, <span class="at">theme =</span> <span class="st">"mako@div"</span>) <span class="sc">+</span></span>
+<span id="cb26-9"><a href="#cb26-9" aria-hidden="true" tabindex="-1"></a>    <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">""</span>,</span>
+<span id="cb26-10"><a href="#cb26-10" aria-hidden="true" tabindex="-1"></a>         <span class="at">subtitle =</span> <span class="st">"Distribution of effect per feature"</span>) <span class="sc">+</span></span>
+<span id="cb26-11"><a href="#cb26-11" aria-hidden="true" tabindex="-1"></a>    <span class="fu">scale_y_discrete</span>(<span class="at">labels =</span> <span class="cn">NULL</span>) <span class="sc">+</span></span>
+<span id="cb26-12"><a href="#cb26-12" aria-hidden="true" tabindex="-1"></a>    <span class="fu">theme</span>(<span class="at">legend.position =</span> <span class="st">"none"</span>)</span>
+<span id="cb26-13"><a href="#cb26-13" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="demo_r_files/figure-html/unnamed-chunk-20-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="conditional-expectation-1" class="level3">
+<h3 class="anchored" data-anchor-id="conditional-expectation-1">Conditional Expectation</h3>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb27"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a>ice_lgb_link <span class="ot">&lt;-</span> <span class="fu">mid.conditional</span>(mid_lgb, <span class="at">type =</span> <span class="st">"link"</span>, <span class="at">variable =</span> <span class="st">"DrivAge"</span>)</span>
+<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>ice_lgb <span class="ot">&lt;-</span> <span class="fu">mid.conditional</span>(mid_lgb, <span class="at">variable =</span> <span class="st">"DrivAge"</span>)</span>
+<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a><span class="fu">grid.arrange</span>(</span>
+<span id="cb27-4"><a href="#cb27-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">nrow =</span> <span class="dv">1</span>,</span>
+<span id="cb27-5"><a href="#cb27-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggmid</span>(ice_lgb_link, <span class="at">var.color =</span> LogDensity) <span class="sc">+</span></span>
+<span id="cb27-6"><a href="#cb27-6" aria-hidden="true" tabindex="-1"></a>    <span class="fu">theme</span>(<span class="at">legend.position =</span> <span class="st">"bottom"</span>) <span class="sc">+</span></span>
+<span id="cb27-7"><a href="#cb27-7" aria-hidden="true" tabindex="-1"></a>    <span class="fu">labs</span>(<span class="at">y =</span> <span class="st">"Linear Predictor"</span>,</span>
+<span id="cb27-8"><a href="#cb27-8" aria-hidden="true" tabindex="-1"></a>         <span class="at">title =</span> <span class="st">"Conditional Expectation"</span>,</span>
+<span id="cb27-9"><a href="#cb27-9" aria-hidden="true" tabindex="-1"></a>         <span class="at">subtitle =</span> <span class="st">"Change in linear predictor"</span>),</span>
+<span id="cb27-10"><a href="#cb27-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggmid</span>(ice_lgb, <span class="at">type =</span> <span class="st">"centered"</span>, <span class="at">var.color =</span> LogDensity) <span class="sc">+</span></span>
+<span id="cb27-11"><a href="#cb27-11" aria-hidden="true" tabindex="-1"></a>    <span class="fu">theme</span>(<span class="at">legend.position =</span> <span class="st">"bottom"</span>) <span class="sc">+</span></span>
+<span id="cb27-12"><a href="#cb27-12" aria-hidden="true" tabindex="-1"></a>    <span class="fu">labs</span>(<span class="at">y =</span> <span class="st">"Prediction"</span>, <span class="at">title =</span> <span class="st">""</span>,</span>
+<span id="cb27-13"><a href="#cb27-13" aria-hidden="true" tabindex="-1"></a>         <span class="at">subtitle =</span> <span class="st">"Centered change in original scale"</span>)</span>
+<span id="cb27-14"><a href="#cb27-14" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="demo_r_files/figure-html/unnamed-chunk-21-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="additive-attribution-1" class="level3">
+<h3 class="anchored" data-anchor-id="additive-attribution-1">Additive Attribution</h3>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb28"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">42</span>)</span>
+<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a>row_ids <span class="ot">&lt;-</span> <span class="fu">sort</span>(<span class="fu">sample</span>(<span class="fu">nrow</span>(train), <span class="dv">4</span>))</span>
+<span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a>bd_list <span class="ot">&lt;-</span> <span class="fu">lapply</span>(</span>
+<span id="cb28-4"><a href="#cb28-4" aria-hidden="true" tabindex="-1"></a>  row_ids,</span>
+<span id="cb28-5"><a href="#cb28-5" aria-hidden="true" tabindex="-1"></a>  <span class="cf">function</span>(x) {</span>
+<span id="cb28-6"><a href="#cb28-6" aria-hidden="true" tabindex="-1"></a>    res <span class="ot">&lt;-</span> <span class="fu">mid.breakdown</span>(mid_lgb, train, <span class="at">row =</span> x,</span>
+<span id="cb28-7"><a href="#cb28-7" aria-hidden="true" tabindex="-1"></a>                         <span class="at">format =</span> <span class="fu">c</span>(<span class="st">"%.6s"</span>, <span class="st">"%.3s, %.3s"</span>))</span>
+<span id="cb28-8"><a href="#cb28-8" aria-hidden="true" tabindex="-1"></a>    <span class="fu">structure</span>(res, <span class="at">row_id =</span> x)</span>
+<span id="cb28-9"><a href="#cb28-9" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb28-10"><a href="#cb28-10" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb28-11"><a href="#cb28-11" aria-hidden="true" tabindex="-1"></a>bd_plots <span class="ot">&lt;-</span> <span class="fu">lapply</span>(</span>
+<span id="cb28-12"><a href="#cb28-12" aria-hidden="true" tabindex="-1"></a>  bd_list, <span class="cf">function</span>(x) {</span>
+<span id="cb28-13"><a href="#cb28-13" aria-hidden="true" tabindex="-1"></a>    label <span class="ot">&lt;-</span> <span class="fu">paste0</span>(<span class="st">"Breakdown of Row "</span>, <span class="fu">attr</span>(x, <span class="st">"row_id"</span>))</span>
+<span id="cb28-14"><a href="#cb28-14" aria-hidden="true" tabindex="-1"></a>    <span class="fu">ggmid</span>(x, <span class="at">theme =</span> <span class="st">"shap"</span>, <span class="at">max.nterms =</span> <span class="dv">10</span>) <span class="sc">+</span></span>
+<span id="cb28-15"><a href="#cb28-15" aria-hidden="true" tabindex="-1"></a>      <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">"Linear Predictor"</span>, <span class="at">subtitle =</span> label) <span class="sc">+</span></span>
+<span id="cb28-16"><a href="#cb28-16" aria-hidden="true" tabindex="-1"></a>      <span class="fu">theme</span>(<span class="at">legend.position =</span> <span class="st">"none"</span>)</span>
+<span id="cb28-17"><a href="#cb28-17" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb28-18"><a href="#cb28-18" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb28-19"><a href="#cb28-19" aria-hidden="true" tabindex="-1"></a><span class="fu">grid.arrange</span>(<span class="at">grobs =</span> bd_plots)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="demo_r_files/figure-html/unnamed-chunk-22-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
+</section>
+<section id="conclusion" class="level2">
+<h2 class="anchored" data-anchor-id="conclusion">Conclusion</h2>
+<p>By using <code>{midr}</code>, we have transformed a complex LightGBM model into a set of interpretable charts and attributions.</p>
 
 
 </section>
