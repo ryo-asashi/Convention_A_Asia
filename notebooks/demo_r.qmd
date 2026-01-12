@@ -4,14 +4,19 @@ title: "Surrogate Modeling with MID in R"
 
 ## Introduction
 
-In actuarial practice, balancing predictive performance with model interpretability is a constant challenge.
-While **Generalized Additive Models (GAMs)** offer inherent transparency, complex black-box models like **Gradient Boosting Models (GBMs)** often provide superior accuracy at the cost of clarity.
+In modern actuarial science, there is often a tension between predictive accuracy and model transparency.
+While ensemble tree-based models like **Gradient Boosting Machines (GBMs)** frequently outperform traditional **Generalized Linear Models (GLMs)**, their black-box nature presents significant hurdles for model governance, regulatory filing, and price filing.
 
-This notebook demonstrates **Maximum Interpretation Decomposition (MID)** using the `{midr}` package in R.
-MID serves as a surrogate modeling framework that decomposes complex predictions into interpretable components—main effects and interactions—allowing us to open the black box without sacrificing the predictive power of it.
+This notebook demonstrates a solution using **Maximum Interpretation Decomposition (MID)** via the `{midr}` and `{midnight}` packages in R.
+MID is a functional decomposition framework that acts as a high-fidelity surrogate for complex models.
+It decomposes black-box predictions into **main effects**, the isolated impact of each individual feature on the response, and **interaction effects**, the joint impact of feature pairs.
 
-```{r, message=FALSE, warning=FALSE}
-# data manipuration
+By replicating a black-box model with this structured additive approach, we can quantify the "unexplained" variance and derive an interpretable model that captures the superior predictive power of machine learning without sacrificing clarity.
+
+We begin by setting up the environment.
+
+```{r setting, message=FALSE, warning=FALSE}
+# data manipulation
 library(arrow)
 library(dplyr)
 
@@ -30,9 +35,12 @@ library(gridExtra)
 # load training and testin datasets
 train <- read_parquet("../data/train.parquet")
 test  <- read_parquet("../data/test.parquet")
+```
 
+```{r config, include = FALSE}
 # cold execution
-COLD_RUN <- TRUE
+COLD_RUN <- FALSE
+
 if (COLD_RUN) {
   set.seed(42)
   train <- train[sample(nrow(train), 50000), ]
@@ -40,7 +48,13 @@ if (COLD_RUN) {
 }
 ```
 
-```{r}
+A key component of our evaluation is the Weighted Poisson Deviance defined as follows.
+
+$$
+L(\mathbf{y}, \hat{\mathbf{y}}, \mathbf{w}) = \frac{2 \sum_{i=1}^n w_i \left( y_i \log(y_i/\hat{y}_i) - (y_i - \hat{y}_i) \right)}{\sum_{i=1}^n w_i}
+$$
+
+```{r poisson_deviance}
 # define loss function
 mean_poisson_deviance <- function(
     y_true, y_pred, sample_weight = rep(1, length(y))
@@ -52,14 +66,14 @@ mean_poisson_deviance <- function(
 }
 ```
 
-## Interpretable GAM
+## The Interpretable Baseline (GAM)
 
-We begin by fitting a standard GAM to the motor insurance frequency dataset.
-Since a GAM is already composed of additive smooth functions, it serves as a perfect sanity check for our surrogate modeling approach.
+We first fit a GAM to establish a transparent benchmark.
+Since GAMs are additive by design, they provide a "ground truth" model structure to be recovered by the functional decomposition.
 
 ### Predictive Modeling
 
-```{r}
+```{r fit_gam}
 fit_gam <- gam(
   Frequency ~ s(VehPower) + s(VehAge) + s(DrivAge) + s(LogDensity) +
               VehBrand + VehGas + Region,
@@ -67,85 +81,108 @@ fit_gam <- gam(
   weights = Exposure,
   family = quasipoisson(link = "log")
 )
+
 summary(fit_gam)
 ```
 
-```{r}
-# evaluate model
+```{r pred_fit_gam}
+# evaluate fitted model
 pred_fit_gam <- predict(fit_gam, test, type = "response")
-cat(
-  "Mean Poisson Deviance:",
-  mean_poisson_deviance(test$Frequency, pred_fit_gam, test$Exposure)
+
+deviance <- mean_poisson_deviance(
+  y_true = test$Frequency,
+  y_pred = pred_fit_gam,
+  sample_weight = test$Exposure
 )
+cat("Mean Poisson Deviance of GAM:", deviance)
 ```
 
 ### Surrogate Modeling
 
-```{r}
+We apply the `interpret()` function to the GAM.
+This step serves as a sanity check: if MID is effective, it should perfectly replicate the predictive behavior of the original GAM.
+
+```{r mid_gam}
 mid_gam <- interpret(
   Frequency ~ VehPower + VehAge + DrivAge + LogDensity +
               VehBrand + VehGas + Region,
-  train,
+  data = train,
   weights = Exposure,
   link = "log",
   model = fit_gam
 )
+
 summary(mid_gam)
+```
+
+```{r pred_mid_gam}
+# evaluate fitted surrogate
+pred_mid_gam = predict(mid_gam, test, type = "response")
+
+deviance <- mean_poisson_deviance(
+  y_true = test$Frequency,
+  y_pred = pred_mid_gam,
+  sample_weight = test$Exposure
+)
+cat("Mean Poisson Deviance of Surrogate(GAM):", deviance)
 ```
 
 ### Model Fidelity
 
-After wrapping the GAM with the `interpret()` function, we evaluate the Model Fidelity.
-In the MID framework, the (Working) Uninterpreted Variation Ratio ($1 - R^s$) quantifies how much of the original model's logic remains "unexplained."
-As shown in the scatter plots, the MID surrogate almost perfectly replicates the GAM's predictions on the test set, both on the linear predictor and the original response scale.
+One way to measure the surrogate model **fidelity**, i.e., how closely the surrogate model replicates the original model, is to calculate the $R^2$ measure between the original model's predictions $\mathbf{y}$ and the surrogate's predictions $\hat{\mathbf{y}}$.
 
-```{r}
-theme_set(theme_midr("xy"))
-pred_mid_gam = predict(mid_gam, test, type = "response")
+$$
+R^2(\mathbf{y},\hat{\mathbf{y}}) = 1 - \frac{\sum_{i=1}^n ({y_i}-\hat{y}_i)^2} {\sum_{i=1}^n (y_i-\bar{y}_i)^2}
+$$
 
+The **Uninterpreted Variation Ratio**
+
+As shown by the $R^2$ score on the linear predictor (log) scale, the MID surrogate achieves near-perfect fidelity here.
+
+```{r }
 set.seed(42)
-plot_idx <- sample(nrow(test), 2000L)
 
-p <- ggplot(
-  data.frame(fit = pred_fit_gam[plot_idx],
-             mid = pred_mid_gam[plot_idx])
+# calculate R-squared on testing dataset
+R2_mid <- weighted.loss(
+  x = log(pred_fit_gam),
+  y = log(pred_mid_gam),
+  w = test$Exposure,
+  method = "r2"
 )
-grid.arrange(
-  nrow = 1,
-  p +
-    geom_point(aes(log(fit), log(mid))) +
-    labs(x = "GAM", y = "MID Surrogate",
-         title = "Model Fidelity", subtitle = "Linear predictor"),
-  p +
-    geom_point(aes(fit, mid)) +
-    labs(x = "GAM", y = "MID Surrogate",
-         title = "", subtitle = "Prediction in the original scale")
-)
+
+cat(sprintf("R-squared: %.6f", R2_mid))
 ```
 
-### Main Effect
-
-A critical step in validating a surrogate model is ensuring that the extracted functional forms (main effects) align with the underlying model's logic.
-In the case of a GAM, where effects are explicitly modeled as splines, the MID surrogate should ideally recover these shapes with high fidelity.
-
-```{r}
+```{r effects_fit_gam}
+# feature effects of GAM
 par.midr(mfrow = c(2, 4))
 termplot(fit_gam)
 ```
 
-```{r}
+```{r effects_mid_gam}
+# main effects of MID surrogate
 par.midr(mfrow = c(2, 4))
-mid.plots(mid_gam, engine = "graphics", ylab = "Partial Effect")
+mid.plots(mid_gam, engine = "graphics", ylab = "Main Effect")
 ```
 
-```{r}
-par.midr(mar = c(1,1,1,1))
+We can also visualize prediction surface with the S3 method of the `persp()` function for MID models.
+
+```{r persp_mid_gam}
+par.midr(mar = c(1, 0, 1, 0), mfrow = c(1, 2))
 persp(mid_gam, "LogDensity:DrivAge", theta = 225, phi = 40, shade = .5)
+persp(mid_gam, "LogDensity:Region", theta = 225, phi = 40, shade = .5)
 ```
 
 ### Effect Importance
 
-```{r, message = FALSE}
+Beyond simple plots for feature effects, `{midr}` provides a suite of diagnostic tools.
+First, we can quantify feature importance measured as follows:
+
+$$
+\text{Importance}_j=\mathbf{E}\left[\left| f_j(\mathbf{X}) \right|\right]
+$$
+
+```{r imp_gam, message = FALSE}
 imp_gam <- mid.importance(mid_gam, data = train, max.nrow = 2000)
 grid.arrange(
   nrow = 1, widths = c(5, 4),
@@ -162,7 +199,9 @@ grid.arrange(
 
 ### Conditional Expectation
 
-```{r, message = FALSE}
+Second, we can explore individual conditional expectations (ICE) of the fitted MID model.
+
+```{r ice_gam, message = FALSE}
 ice_gam_link <- mid.conditional(mid_gam, type = "link", variable = "DrivAge")
 ice_gam <- mid.conditional(mid_gam, variable = "DrivAge")
 grid.arrange(
@@ -180,6 +219,8 @@ grid.arrange(
 ```
 
 ### Additive Attribution
+
+Third, we can perform instance-level attribution through additive breakdown plots, which are directly derived from the functional decomposition.
 
 ```{r}
 set.seed(42)
@@ -204,68 +245,79 @@ grid.arrange(grobs = bd_plots)
 
 ## Black-Box GBM
 
-Next, we train a LightGBM model.
-While more powerful, its tree-based structure makes it difficult to explain the relationship between inputs and outputs directly.
-
-We apply MID to the LightGBM model, specifically allowing for second-order interactions (`^ 2`) in the formula.
-This allows the surrogate to capture joint effects that a simple additive model would miss.
+While GAMs are transparent, GBMs such as **LightGBM** often yields superior predictive power by capturing high-order interactions.
+However, this accuracy comes at the cost of being a black box. 
+Here, we train a LightGBM model using optimized hyperparameters to achieve high predictive performance.
 
 ```{r}
+# hold out validation dataset
 valid_idx <- seq_len(floor(nrow(train) * 0.2))
+
+# create datasets for training
 dtrain <- lgb.Dataset(
   data.matrix(select(train[-valid_idx, ], -Frequency, -Exposure)),
   label = train$Frequency[-valid_idx],
   weight = train$Exposure[-valid_idx],
   categorical_feature = c("VehBrand", "VehGas", "Region")
 )
+
 dvalid <- lgb.Dataset.create.valid(
   dtrain,
   data.matrix(select(train[ valid_idx, ], -Frequency, -Exposure)),
   label = train$Frequency[ valid_idx],
   weight = train$Exposure[ valid_idx]
 )
+
+# model parameters
 params_lgb <- list(
   objective = "poisson",
-  learning_rate = 0.005,
-  num_leaves = 10,
-  reg_lambda = 1,
-  reg_alpha = 1,
-  colsample_bynode = 0.8,
-  subsample = 0.8,
-  min_child_samples = 20,
-  min_split_gain = 0.1,
-  poisson_max_delta_step = 0.1
+  learning_rate = 0.03188002,
+  num_leaves = 30,
+  reg_lambda = 0.004201069,
+  reg_alpha = 0.2523909,
+  colsample_bynode = 0.5552524,
+  subsample = 0.5938199,
+  min_child_samples = 9,
+  min_split_gain = 0.3920509,
+  poisson_max_delta_step = 0.8039541
 )
+
+set.seed(42)
 fit_lgb <- lgb.train(
   params = params_lgb,
   data = dtrain,
   nrounds = 1000L,
   valids = list(eval = dvalid),
-  early_stopping_round = 20L,
+  early_stopping_round = 50L,
   verbose = 0L
 )
+
 summary(fit_lgb)
 ```
+
+The weighted mean Poisson deviance of the fitted LightGBM is around 0.4655023, which is better than the GAM's performance.
 
 ```{r}
 # evaluate model
 pred_fit_lgb <- predict(
   fit_lgb, data.matrix(select(test, -Frequency, -Exposure))
 )
-cat(
-  "Mean Poisson Deviance:",
-  mean_poisson_deviance(test$Frequency, pred_fit_lgb, test$Exposure)
-)
+
+cat("Mean Poisson Deviance:",
+    mean_poisson_deviance(test$Frequency, pred_fit_lgb, test$Exposure))
 ```
 
 ### Surrogate Modeling
 
+We now use `{midr}` to replicate the LightGBM model.
+By including interaction terms in the model formula, we allow the surrogate to capture two-way joint relationships of features that the GBM might have learned from the data.
+
 ```{r}
 mid_lgb <- interpret(
   Frequency ~ (VehPower + VehAge + DrivAge + LogDensity +
-               VehBrand + VehGas + Region) ^ 2,
-  train,
-  lambda = 0.5,
+               VehBrand + VehGas + Region)^2,
+  data = train,
+  lambda = 0.01,
   weights = Exposure,
   link = "log",
   model = fit_lgb,
@@ -274,33 +326,31 @@ mid_lgb <- interpret(
     predict(model, newdata)
   }
 )
+
 summary(mid_lgb)
+```
+
+```{r}
+pred_mid_lgb = predict(mid_lgb, test, type = "response")
+
+cat("Mean Poisson Deviance:",
+    mean_poisson_deviance(test$Frequency, pred_mid_lgb, test$Exposure))
 ```
 
 ### Model Fidelity
 
 ```{r}
 theme_set(theme_midr("xy"))
-pred_mid_lgb = predict(mid_lgb, test, type = "response")
 
-# set.seed(42)
-# plot_idx <- sample(nrow(test), 2000L)
+# calculate R-squared on testing dataset
+R2_mid <- weighted.loss(
+  x = log(pred_fit_lgb),
+  y = log(pred_mid_lgb),
+  w = test$Exposure,
+  method = "r2"
+)
 
-p <- ggplot(
-  data.frame(fit = pred_fit_lgb[plot_idx],
-             mid = pred_mid_lgb[plot_idx])
-)
-grid.arrange(
-  nrow = 1,
-  p +
-    geom_point(aes(log(fit), log(mid))) +
-    labs(x = "LightGBM", y = "MID Surrogate",
-         title = "Model Fidelity", subtitle = "Linear predictor"),
-  p +
-    geom_point(aes(fit, mid)) +
-    labs(x = "LightGBM", y = "MID Surrogate",
-         title = "", subtitle = "Prediction in the original scale")
-)
+cat(sprintf("R-squared: %.4f", R2_mid))
 ```
 
 ### Main Effect
@@ -312,12 +362,9 @@ mid.plots(mid_lgb, engine = "graphics", ylab = "Partial Effect")
 
 ### Interaction Effect
 
-A key strength of `{midr}` is its ability to isolate and visualize interaction effects:
-
-- Interaction Plots: We can visualize specific interactions, such as `LogDensity:Region`, using `ggmid()`.
-This helps identify whether certain geographical regions react differently to population density.
-
-- Perspective Plots: The `persp()` function provides a 3D view of these interactions, offering a more intuitive understanding of non-linear surfaces. This S3 method is implemented in `{midnight}`.
+One of the important features of `{midr}` is its ability to isolate interaction effects.
+In this section, we visualize how geographical `Region` interacts with `LogDensity`.
+These insights are often hidden in GBMs but are critical in actuarial practice.
 
 ```{r}
 grid.arrange(
@@ -334,7 +381,8 @@ grid.arrange(
 ```
 
 ```{r}
-par.midr(mar = c(1,1,1,1))
+par.midr(mar = c(1, 0, 1, 0), mfrow = c(1, 2))
+persp(mid_lgb, "LogDensity:DrivAge", theta = 225, phi = 40, shade = .5)
 persp(mid_lgb, "LogDensity:Region", theta = 225, phi = 40, shade = .5)
 ```
 
@@ -344,11 +392,11 @@ persp(mid_lgb, "LogDensity:Region", theta = 225, phi = 40, shade = .5)
 imp_lgb <- mid.importance(mid_lgb, data = train, max.nrow = 2000)
 grid.arrange(
   nrow = 1, widths = c(4, 3),
-  ggmid(imp_lgb, theme = "bluescale@qual") +
+  ggmid(imp_lgb, theme = "bluescale@qual", max.nterms = 20) +
     labs(title = "Effect Importance",
          subtitle = "Average absolute effect per feature") +
     theme(legend.position = "none"),
-  ggmid(imp_lgb, type = "beeswarm", theme = "mako@div") +
+  ggmid(imp_lgb, type = "beeswarm", theme = "mako@div", max.nterms = 20) +
     labs(title = "",
          subtitle = "Distribution of effect per feature") +
     scale_y_discrete(labels = NULL) +
@@ -380,6 +428,7 @@ grid.arrange(
 ```{r}
 set.seed(42)
 row_ids <- sort(sample(nrow(train), 4))
+
 bd_list <- lapply(
   row_ids,
   function(x) {
@@ -388,6 +437,7 @@ bd_list <- lapply(
     structure(res, row_id = x)
   }
 )
+
 bd_plots <- lapply(
   bd_list, function(x) {
     label <- paste0("Breakdown of Row ", attr(x, "row_id"))
@@ -396,6 +446,7 @@ bd_plots <- lapply(
       theme(legend.position = "none")
   }
 )
+
 grid.arrange(grobs = bd_plots)
 ```
 
