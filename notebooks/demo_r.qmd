@@ -154,7 +154,7 @@ $$
 $$
 
 This metric represents the proportion of the black-box model's variance that is not captured by the additive components of the MID model.
-The R-squared score, $\mathbf{R}^2(f,g) = 1 - \mathbf{U}(f,g)$, is a standard measure for this purpose. It is important to note that this $\mathbf{R}^2$ measures the fidelity to the black-box model, not the predictive accuracy relative to the ground truth observations.
+The **R-squared score**, $\mathbf{R}^2(f,g) = 1 - \mathbf{U}(f,g)$, is a standard measure for this purpose. It is important to note that this $\mathbf{R}^2$ measures the fidelity to the black-box model, not the predictive accuracy relative to the ground truth observations.
 
 In the `{midr}` package, the summary output includes this ratio calculated on the training set.
 For models with non-linear links (e.g., Poisson regression), the "working" ratio is computed on the scale of the link function (e.g., $\log$ scale).
@@ -338,7 +338,7 @@ fit_lgb <- lgb.train(
   nrounds = 1000L,
   valids = list(eval = dvalid),
   early_stopping_round = 50L,
-  verbose = 0L
+  verbose = -1L
 )
 
 summary(fit_lgb)
@@ -360,13 +360,20 @@ cat("Mean Poisson Deviance:", deviance)
 
 ### Surrogate Modeling
 
-We now use `{midr}` to replicate the LightGBM model.
+We use `{midr}` to replicate the LightGBM model.
 By including interaction terms in the model formula, we allow the surrogate to capture the joint relationships that the GBM has learned.
 The goal is to approximate the LightGBM function $f_{LGB}(\mathbf{x})$ with our interpretable structure $g(\mathbf{x})$:
 
 $$
 f_{LGB}(\mathbf{x}) \approx g(\mathbf{x}) = g_\emptyset + \sum_{j} g_j(x_j) + \sum_{j < k} g_{jk}(x_j, x_k)
 $$
+
+::: {.callout-warning}
+### Computational Considerations
+Including all second-order interactions using the `(...)^2` syntax results in $p(p-1)/2$ interaction terms.
+For high-dimensional data, this can be memory-intensive.
+Users should ensure sufficient RAM is available or consider limiting the formula to the most relevant features, or using a subset of the training set.
+:::
 
 ```{r}
 mid_lgb <- interpret(
