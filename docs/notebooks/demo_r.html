@@ -237,13 +237,26 @@ window.Quarto = {
 <h2 class="anchored" data-anchor-id="introduction">Introduction</h2>
 <p>In modern actuarial science, there is an inherent tension between predictive accuracy and model transparency. While ensemble tree-based models like <strong>Gradient Boosting Machines (GBMs)</strong> frequently outperform traditional <strong>Generalized Linear Models (GLMs)</strong>, their “black-box” nature presents significant hurdles for model governance, regulatory compliance, and price filing.</p>
 <p>This notebook demonstrates a solution using <strong>Maximum Interpretation Decomposition (MID)</strong> via the <code>{midr}</code> and <code>{midnight}</code> packages in R.</p>
+<div class="callout callout-style-default callout-warning callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Compatibility Notice
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>This article relies on features introduced in <strong>midr (&gt;= 0.5.2.906)</strong> and <strong>midnight (&gt;= 0.1.0.909)</strong>. Please ensure your packages are up to date. Some visualization arguments are not available in earlier versions.</p>
+</div>
+</div>
 <section id="what-is-mid" class="level3">
 <h3 class="anchored" data-anchor-id="what-is-mid">What is MID?</h3>
-<p>MID is a functional decomposition framework that acts as a high-fidelity surrogate for complex models. It deconstructs a black-box prediction function <span class="math inline">\(f(\mathbf{x})\)</span> into several interpretable components: intercept <span class="math inline">\(g_\emptyset\)</span>, main effects <span class="math inline">\(g_j(x_j)\)</span>, and interaction effects <span class="math inline">\(g_{jk}(x_j, x_k)\)</span>. The prediction is represented as the following additive structure:</p>
+<p>MID is a functional decomposition framework that acts as a high-fidelity surrogate for complex models. It deconstructs a black-box prediction function <span class="math inline">\(f(\mathbf{X})\)</span> into several interpretable components: intercept <span class="math inline">\(g_\emptyset\)</span>, main effects <span class="math inline">\(g_j(X_j)\)</span>, and interaction effects <span class="math inline">\(g_{jk}(X_j, X_k)\)</span>. The prediction is represented as the following additive structure:</p>
 <p><span class="math display">\[
-f(\mathbf{x}) = g_\emptyset + \sum_{j} g_j(x_{j}) + \sum_{j &lt; k} g_{jk}(x_{j},\;x_{k}) + \dots + g_D(\mathbf{x})
+f(\mathbf{X}) = g_\emptyset + \sum_{j} g_j(X_{j}) + \sum_{j &lt; k} g_{jk}(X_{j},\;X_{k}) + \dots + g_D(\mathbf{X})
 \]</span></p>
-<p>To ensure the uniqueness and interpretability of each component, MID imposes vanishing conditional expectation constraints:</p>
+<p>To ensure the uniqueness and interpretability of each component, MID imposes the centering constraints:</p>
 <p><span class="math display">\[
 \begin{aligned}
 \mathbf{E}\left[g_j(X_j)\right] &amp;= 0 \\
@@ -251,7 +264,7 @@ f(\mathbf{x}) = g_\emptyset + \sum_{j} g_j(x_{j}) + \sum_{j &lt; k} g_{jk}(x_{j}
 \mathbf{E}\left[g_{jk}(X_j, X_k) \mid X_k = x_k\right] &amp;= 0 \quad (\forall x_k)
 \end{aligned}
 \]</span></p>
-<p>By replicating a black-box model with this structured approach, we can quantify the “uninterpreted” variance (captured by <span class="math inline">\(g_D(\mathbf{x})\)</span>) and derive a representation that captures the superior predictive power of machine learning without sacrificing actuarial clarity.</p>
+<p>By replicating a black-box model with this structured approach, we can quantify the “uninterpreted” variance (captured by <span class="math inline">\(g_D(\mathbf{X})\)</span>) and derive a representation that captures the superior predictive power of machine learning without sacrificing actuarial clarity.</p>
 </section>
 <section id="setting-up" class="level3">
 <h3 class="anchored" data-anchor-id="setting-up">Setting Up</h3>
@@ -280,7 +293,7 @@ f(\mathbf{x}) = g_\emptyset + \sum_{j} g_j(x_{j}) + \sum_{j &lt; k} g_{jk}(x_{j}
 <span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>test  <span class="ot">&lt;-</span> <span class="fu">read_parquet</span>(<span class="st">"../data/test.parquet"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
-<p>A key component of our evaluation is the <strong>Weighted Mean Poisson Deviance</strong> defined as follows.</p>
+<p>A key component of our evaluation is the <strong>Weighted Mean Poisson Deviance</strong> defined as follows:</p>
 <p><span class="math display">\[
 L(\mathbf{y}, \hat{\mathbf{y}}, \mathbf{w}) = \frac{2 \sum_{i=1}^n w_i \left( y_i \log(y_i/\hat{y}_i) - (y_i - \hat{y}_i) \right)}{\sum_{i=1}^n w_i}
 \]</span></p>
@@ -604,20 +617,19 @@ g(\mathbf{x}) = \underbrace{g_\emptyset}_{\text{Intercept}} + \underbrace{\sum_{
 <span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>bd_list <span class="ot">&lt;-</span> <span class="fu">lapply</span>(</span>
 <span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a>  row_ids,</span>
 <span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a>  <span class="cf">function</span>(x) {</span>
-<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a>    res <span class="ot">&lt;-</span> <span class="fu">mid.breakdown</span>(mid_gam, train, <span class="at">row =</span> x,</span>
-<span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a>                         <span class="at">format =</span> <span class="fu">list</span>(<span class="at">LogDensity =</span> <span class="st">"%.2f"</span>))</span>
-<span id="cb18-8"><a href="#cb18-8" aria-hidden="true" tabindex="-1"></a>    <span class="fu">structure</span>(res, <span class="at">row_id =</span> x)</span>
-<span id="cb18-9"><a href="#cb18-9" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb18-10"><a href="#cb18-10" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb18-11"><a href="#cb18-11" aria-hidden="true" tabindex="-1"></a>bd_plots <span class="ot">&lt;-</span> <span class="fu">lapply</span>(</span>
-<span id="cb18-12"><a href="#cb18-12" aria-hidden="true" tabindex="-1"></a>  bd_list, <span class="cf">function</span>(x) {</span>
-<span id="cb18-13"><a href="#cb18-13" aria-hidden="true" tabindex="-1"></a>    label <span class="ot">&lt;-</span> <span class="fu">paste0</span>(<span class="st">"Breakdown of Row "</span>, <span class="fu">attr</span>(x, <span class="st">"row_id"</span>))</span>
-<span id="cb18-14"><a href="#cb18-14" aria-hidden="true" tabindex="-1"></a>    <span class="fu">ggmid</span>(x, <span class="at">theme =</span> <span class="st">"shap"</span>) <span class="sc">+</span></span>
-<span id="cb18-15"><a href="#cb18-15" aria-hidden="true" tabindex="-1"></a>      <span class="fu">labs</span>(<span class="at">x =</span> <span class="cn">NULL</span>, <span class="at">subtitle =</span> label) <span class="sc">+</span></span>
-<span id="cb18-16"><a href="#cb18-16" aria-hidden="true" tabindex="-1"></a>      <span class="fu">theme</span>(<span class="at">legend.position =</span> <span class="st">"none"</span>)</span>
-<span id="cb18-17"><a href="#cb18-17" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb18-18"><a href="#cb18-18" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb18-19"><a href="#cb18-19" aria-hidden="true" tabindex="-1"></a><span class="fu">grid.arrange</span>(<span class="at">grobs =</span> bd_plots)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a>    res <span class="ot">&lt;-</span> <span class="fu">mid.breakdown</span>(mid_gam, train, <span class="at">row =</span> x)</span>
+<span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a>    <span class="fu">structure</span>(res, <span class="at">row_id =</span> x)</span>
+<span id="cb18-8"><a href="#cb18-8" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb18-9"><a href="#cb18-9" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb18-10"><a href="#cb18-10" aria-hidden="true" tabindex="-1"></a>bd_plots <span class="ot">&lt;-</span> <span class="fu">lapply</span>(</span>
+<span id="cb18-11"><a href="#cb18-11" aria-hidden="true" tabindex="-1"></a>  bd_list, <span class="cf">function</span>(x) {</span>
+<span id="cb18-12"><a href="#cb18-12" aria-hidden="true" tabindex="-1"></a>    label <span class="ot">&lt;-</span> <span class="fu">paste0</span>(<span class="st">"Breakdown of Row "</span>, <span class="fu">attr</span>(x, <span class="st">"row_id"</span>))</span>
+<span id="cb18-13"><a href="#cb18-13" aria-hidden="true" tabindex="-1"></a>    <span class="fu">ggmid</span>(x, <span class="at">theme =</span> <span class="st">"shap"</span>, <span class="at">format.args =</span> <span class="fu">list</span>(<span class="at">digits =</span> <span class="dv">4</span>)) <span class="sc">+</span></span>
+<span id="cb18-14"><a href="#cb18-14" aria-hidden="true" tabindex="-1"></a>      <span class="fu">labs</span>(<span class="at">x =</span> <span class="cn">NULL</span>, <span class="at">subtitle =</span> label) <span class="sc">+</span></span>
+<span id="cb18-15"><a href="#cb18-15" aria-hidden="true" tabindex="-1"></a>      <span class="fu">theme</span>(<span class="at">legend.position =</span> <span class="st">"none"</span>)</span>
+<span id="cb18-16"><a href="#cb18-16" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb18-17"><a href="#cb18-17" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb18-18"><a href="#cb18-18" aria-hidden="true" tabindex="-1"></a><span class="fu">grid.arrange</span>(<span class="at">grobs =</span> bd_plots)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output-display">
 <div>
@@ -743,6 +755,8 @@ Computational Considerations
 <span id="cb23-14"><a href="#cb23-14" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb23-15"><a href="#cb23-15" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(mid_lgb)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
+</div>
+<div class="cell">
 <div class="cell-output cell-output-stdout">
 <pre><code>
 Call:
@@ -824,7 +838,7 @@ Region       factor(7)   factor(7)</code></pre>
 <div class="cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="demo_r_files/figure-html/unnamed-chunk-8-1.png" class="img-fluid figure-img" width="672"></p>
+<p><img src="demo_r_files/figure-html/unnamed-chunk-9-1.png" class="img-fluid figure-img" width="672"></p>
 </figure>
 </div>
 </div>
@@ -848,7 +862,7 @@ Region       factor(7)   factor(7)</code></pre>
 <div class="cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="demo_r_files/figure-html/unnamed-chunk-9-1.png" class="img-fluid figure-img" width="672"></p>
+<p><img src="demo_r_files/figure-html/unnamed-chunk-10-1.png" class="img-fluid figure-img" width="672"></p>
 </figure>
 </div>
 </div>
@@ -863,7 +877,7 @@ Region       factor(7)   factor(7)</code></pre>
 <div class="cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="demo_r_files/figure-html/unnamed-chunk-10-1.png" class="img-fluid figure-img" width="672"></p>
+<p><img src="demo_r_files/figure-html/unnamed-chunk-11-1.png" class="img-fluid figure-img" width="672"></p>
 </figure>
 </div>
 </div>
@@ -892,7 +906,7 @@ Region       factor(7)   factor(7)</code></pre>
 <div class="cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="demo_r_files/figure-html/unnamed-chunk-11-1.png" class="img-fluid figure-img" width="672"></p>
+<p><img src="demo_r_files/figure-html/unnamed-chunk-12-1.png" class="img-fluid figure-img" width="672"></p>
 </figure>
 </div>
 </div>
@@ -922,7 +936,7 @@ Region       factor(7)   factor(7)</code></pre>
 <div class="cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="demo_r_files/figure-html/unnamed-chunk-12-1.png" class="img-fluid figure-img" width="672"></p>
+<p><img src="demo_r_files/figure-html/unnamed-chunk-13-1.png" class="img-fluid figure-img" width="672"></p>
 </figure>
 </div>
 </div>
@@ -940,16 +954,16 @@ Region       factor(7)   factor(7)</code></pre>
 <span id="cb34-4"><a href="#cb34-4" aria-hidden="true" tabindex="-1"></a>bd_list <span class="ot">&lt;-</span> <span class="fu">lapply</span>(</span>
 <span id="cb34-5"><a href="#cb34-5" aria-hidden="true" tabindex="-1"></a>  row_ids,</span>
 <span id="cb34-6"><a href="#cb34-6" aria-hidden="true" tabindex="-1"></a>  <span class="cf">function</span>(x) {</span>
-<span id="cb34-7"><a href="#cb34-7" aria-hidden="true" tabindex="-1"></a>    res <span class="ot">&lt;-</span> <span class="fu">mid.breakdown</span>(mid_lgb, train, <span class="at">row =</span> x,</span>
-<span id="cb34-8"><a href="#cb34-8" aria-hidden="true" tabindex="-1"></a>                         <span class="at">format =</span> <span class="fu">c</span>(<span class="st">"%.6s"</span>, <span class="st">"%.3s, %.3s"</span>))</span>
-<span id="cb34-9"><a href="#cb34-9" aria-hidden="true" tabindex="-1"></a>    <span class="fu">structure</span>(res, <span class="at">row_id =</span> x)</span>
-<span id="cb34-10"><a href="#cb34-10" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb34-11"><a href="#cb34-11" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb34-12"><a href="#cb34-12" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb34-13"><a href="#cb34-13" aria-hidden="true" tabindex="-1"></a>bd_plots <span class="ot">&lt;-</span> <span class="fu">lapply</span>(</span>
-<span id="cb34-14"><a href="#cb34-14" aria-hidden="true" tabindex="-1"></a>  bd_list, <span class="cf">function</span>(x) {</span>
-<span id="cb34-15"><a href="#cb34-15" aria-hidden="true" tabindex="-1"></a>    label <span class="ot">&lt;-</span> <span class="fu">paste0</span>(<span class="st">"Breakdown of Row "</span>, <span class="fu">attr</span>(x, <span class="st">"row_id"</span>))</span>
-<span id="cb34-16"><a href="#cb34-16" aria-hidden="true" tabindex="-1"></a>    <span class="fu">ggmid</span>(x, <span class="at">theme =</span> <span class="st">"shap"</span>, <span class="at">max.nterms =</span> <span class="dv">10</span>) <span class="sc">+</span></span>
+<span id="cb34-7"><a href="#cb34-7" aria-hidden="true" tabindex="-1"></a>    res <span class="ot">&lt;-</span> <span class="fu">mid.breakdown</span>(mid_lgb, train, <span class="at">row =</span> x)</span>
+<span id="cb34-8"><a href="#cb34-8" aria-hidden="true" tabindex="-1"></a>    <span class="fu">structure</span>(res, <span class="at">row_id =</span> x)</span>
+<span id="cb34-9"><a href="#cb34-9" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb34-10"><a href="#cb34-10" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb34-11"><a href="#cb34-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb34-12"><a href="#cb34-12" aria-hidden="true" tabindex="-1"></a>bd_plots <span class="ot">&lt;-</span> <span class="fu">lapply</span>(</span>
+<span id="cb34-13"><a href="#cb34-13" aria-hidden="true" tabindex="-1"></a>  bd_list, <span class="cf">function</span>(x) {</span>
+<span id="cb34-14"><a href="#cb34-14" aria-hidden="true" tabindex="-1"></a>    label <span class="ot">&lt;-</span> <span class="fu">paste0</span>(<span class="st">"Breakdown of Row "</span>, <span class="fu">attr</span>(x, <span class="st">"row_id"</span>))</span>
+<span id="cb34-15"><a href="#cb34-15" aria-hidden="true" tabindex="-1"></a>    <span class="fu">ggmid</span>(x, <span class="at">theme =</span> <span class="st">"shap"</span>, <span class="at">max.nterms =</span> <span class="dv">10</span>,</span>
+<span id="cb34-16"><a href="#cb34-16" aria-hidden="true" tabindex="-1"></a>          <span class="at">format.args =</span> <span class="fu">list</span>(<span class="at">digits =</span> <span class="dv">4</span>)) <span class="sc">+</span></span>
 <span id="cb34-17"><a href="#cb34-17" aria-hidden="true" tabindex="-1"></a>      <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">"Linear Predictor"</span>, <span class="at">subtitle =</span> label) <span class="sc">+</span></span>
 <span id="cb34-18"><a href="#cb34-18" aria-hidden="true" tabindex="-1"></a>      <span class="fu">theme</span>(<span class="at">legend.position =</span> <span class="st">"none"</span>)</span>
 <span id="cb34-19"><a href="#cb34-19" aria-hidden="true" tabindex="-1"></a>  }</span>
@@ -960,7 +974,7 @@ Region       factor(7)   factor(7)</code></pre>
 <div class="cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="demo_r_files/figure-html/unnamed-chunk-13-1.png" class="img-fluid figure-img" width="672"></p>
+<p><img src="demo_r_files/figure-html/unnamed-chunk-14-1.png" class="img-fluid figure-img" width="672"></p>
 </figure>
 </div>
 </div>

@@ -9,17 +9,22 @@ While ensemble tree-based models like **Gradient Boosting Machines (GBMs)** freq
 
 This notebook demonstrates a solution using **Maximum Interpretation Decomposition (MID)** via the `{midr}` and `{midnight}` packages in R.
 
+::: {.callout-warning}
+## Compatibility Notice
+This article relies on features introduced in **midr (>= 0.5.2.906)** and **midnight (>= 0.1.0.909)**. Please ensure your packages are up to date. Some visualization arguments are not available in earlier versions.
+:::
+
 ### What is MID?
 
 MID is a functional decomposition framework that acts as a high-fidelity surrogate for complex models.
-It deconstructs a black-box prediction function $f(\mathbf{x})$ into several interpretable components: intercept $g_\emptyset$, main effects $g_j(x_j)$, and interaction effects $g_{jk}(x_j, x_k)$.
+It deconstructs a black-box prediction function $f(\mathbf{X})$ into several interpretable components: intercept $g_\emptyset$, main effects $g_j(X_j)$, and interaction effects $g_{jk}(X_j, X_k)$.
 The prediction is represented as the following additive structure:
 
 $$
-f(\mathbf{x}) = g_\emptyset + \sum_{j} g_j(x_{j}) + \sum_{j < k} g_{jk}(x_{j},\;x_{k}) + \dots + g_D(\mathbf{x})
+f(\mathbf{X}) = g_\emptyset + \sum_{j} g_j(X_{j}) + \sum_{j < k} g_{jk}(X_{j},\;X_{k}) + \dots + g_D(\mathbf{X})
 $$
 
-To ensure the uniqueness and interpretability of each component, MID imposes vanishing conditional expectation constraints:
+To ensure the uniqueness and interpretability of each component, MID imposes the centering constraints:
 
 $$
 \begin{aligned}
@@ -29,7 +34,7 @@ $$
 \end{aligned}
 $$
 
-By replicating a black-box model with this structured approach, we can quantify the "uninterpreted" variance (captured by $g_D(\mathbf{x})$) and derive a representation that captures the superior predictive power of machine learning without sacrificing actuarial clarity.
+By replicating a black-box model with this structured approach, we can quantify the "uninterpreted" variance (captured by $g_D(\mathbf{X})$) and derive a representation that captures the superior predictive power of machine learning without sacrificing actuarial clarity.
 
 ### Setting Up
 
@@ -58,8 +63,10 @@ test  <- read_parquet("../data/test.parquet")
 ```
 
 ```{r config, include = FALSE}
-# cold execution
+# configurations
 COLD_RUN <- FALSE
+LOAD_MID_LGB <- TRUE
+SAVE_MID_LGB <- FALSE
 
 if (COLD_RUN) {
   set.seed(42)
@@ -68,7 +75,7 @@ if (COLD_RUN) {
 }
 ```
 
-A key component of our evaluation is the **Weighted Mean Poisson Deviance** defined as follows.
+A key component of our evaluation is the **Weighted Mean Poisson Deviance** defined as follows:
 
 $$
 L(\mathbf{y}, \hat{\mathbf{y}}, \mathbf{w}) = \frac{2 \sum_{i=1}^n w_i \left( y_i \log(y_i/\hat{y}_i) - (y_i - \hat{y}_i) \right)}{\sum_{i=1}^n w_i}
@@ -275,15 +282,14 @@ row_ids <- sort(sample(nrow(train), 4))
 bd_list <- lapply(
   row_ids,
   function(x) {
-    res <- mid.breakdown(mid_gam, train, row = x,
-                         format = list(LogDensity = "%.2f"))
+    res <- mid.breakdown(mid_gam, train, row = x)
     structure(res, row_id = x)
   }
 )
 bd_plots <- lapply(
   bd_list, function(x) {
     label <- paste0("Breakdown of Row ", attr(x, "row_id"))
-    ggmid(x, theme = "shap") +
+    ggmid(x, theme = "shap", format.args = list(digits = 4)) +
       labs(x = NULL, subtitle = label) +
       theme(legend.position = "none")
   }
@@ -375,7 +381,7 @@ For high-dimensional data, this can be memory-intensive.
 Users should ensure sufficient RAM is available or consider limiting the formula to the most relevant features, or using a subset of the training set.
 :::
 
-```{r}
+```{r, eval=FALSE}
 mid_lgb <- interpret(
   Frequency ~ (VehPower + VehAge + DrivAge + LogDensity +
                VehBrand + VehGas + Region)^2,
@@ -390,6 +396,30 @@ mid_lgb <- interpret(
   }
 )
 
+summary(mid_lgb)
+```
+
+```{r, echo = FALSE}
+if (LOAD_MID_LGB) {
+  mid_lgb <- qs::qread("../data/mid_lgb.qs")
+} else {
+  mid_lgb <- interpret(
+    Frequency ~ (VehPower + VehAge + DrivAge + LogDensity +
+                 VehBrand + VehGas + Region)^2,
+    data = train,
+    lambda = 0.01,
+    weights = Exposure,
+    link = "log",
+    model = fit_lgb,
+    pred.fun = function(model, data) {
+      newdata <- data.matrix(select(data, -Frequency, -Exposure))
+      predict(model, newdata)
+    }
+  )
+}
+if (SAVE_MID_LGB) {
+  qs::qsave(mid_lgb, "../data/mid_lgb.qs")
+}
 summary(mid_lgb)
 ```
 
@@ -506,8 +536,7 @@ row_ids <- sort(sample(nrow(train), 4))
 bd_list <- lapply(
   row_ids,
   function(x) {
-    res <- mid.breakdown(mid_lgb, train, row = x,
-                         format = c("%.6s", "%.3s, %.3s"))
+    res <- mid.breakdown(mid_lgb, train, row = x)
     structure(res, row_id = x)
   }
 )
@@ -515,7 +544,8 @@ bd_list <- lapply(
 bd_plots <- lapply(
   bd_list, function(x) {
     label <- paste0("Breakdown of Row ", attr(x, "row_id"))
-    ggmid(x, theme = "shap", max.nterms = 10) +
+    ggmid(x, theme = "shap", max.nterms = 10,
+          format.args = list(digits = 4)) +
       labs(x = "Linear Predictor", subtitle = label) +
       theme(legend.position = "none")
   }
