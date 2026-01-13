@@ -184,22 +184,25 @@ window.Quarto = {
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#introduction" id="toc-introduction" class="nav-link active" data-scroll-target="#introduction">Introduction</a></li>
-  <li><a href="#the-interpretable-baseline-gam" id="toc-the-interpretable-baseline-gam" class="nav-link" data-scroll-target="#the-interpretable-baseline-gam">The Interpretable Baseline (GAM)</a>
+  <li><a href="#introduction" id="toc-introduction" class="nav-link active" data-scroll-target="#introduction">Introduction</a>
   <ul class="collapse">
-  <li><a href="#predictive-modeling" id="toc-predictive-modeling" class="nav-link" data-scroll-target="#predictive-modeling">Predictive Modeling</a></li>
+  <li><a href="#what-is-mid" id="toc-what-is-mid" class="nav-link" data-scroll-target="#what-is-mid">What is MID?</a></li>
+  <li><a href="#setting-up" id="toc-setting-up" class="nav-link" data-scroll-target="#setting-up">Setting Up</a></li>
+  </ul></li>
+  <li><a href="#the-interpretable-baseline-gam" id="toc-the-interpretable-baseline-gam" class="nav-link" data-scroll-target="#the-interpretable-baseline-gam">The Interpretable Baseline: GAM</a>
+  <ul class="collapse">
   <li><a href="#surrogate-modeling" id="toc-surrogate-modeling" class="nav-link" data-scroll-target="#surrogate-modeling">Surrogate Modeling</a></li>
   <li><a href="#model-fidelity" id="toc-model-fidelity" class="nav-link" data-scroll-target="#model-fidelity">Model Fidelity</a></li>
+  <li><a href="#feature-effects" id="toc-feature-effects" class="nav-link" data-scroll-target="#feature-effects">Feature Effects</a></li>
   <li><a href="#effect-importance" id="toc-effect-importance" class="nav-link" data-scroll-target="#effect-importance">Effect Importance</a></li>
   <li><a href="#conditional-expectation" id="toc-conditional-expectation" class="nav-link" data-scroll-target="#conditional-expectation">Conditional Expectation</a></li>
   <li><a href="#additive-attribution" id="toc-additive-attribution" class="nav-link" data-scroll-target="#additive-attribution">Additive Attribution</a></li>
   </ul></li>
-  <li><a href="#black-box-gbm" id="toc-black-box-gbm" class="nav-link" data-scroll-target="#black-box-gbm">Black-Box GBM</a>
+  <li><a href="#the-black-box-lightgbm" id="toc-the-black-box-lightgbm" class="nav-link" data-scroll-target="#the-black-box-lightgbm">The Black-Box: LightGBM</a>
   <ul class="collapse">
   <li><a href="#surrogate-modeling-1" id="toc-surrogate-modeling-1" class="nav-link" data-scroll-target="#surrogate-modeling-1">Surrogate Modeling</a></li>
   <li><a href="#model-fidelity-1" id="toc-model-fidelity-1" class="nav-link" data-scroll-target="#model-fidelity-1">Model Fidelity</a></li>
-  <li><a href="#main-effect" id="toc-main-effect" class="nav-link" data-scroll-target="#main-effect">Main Effect</a></li>
-  <li><a href="#interaction-effect" id="toc-interaction-effect" class="nav-link" data-scroll-target="#interaction-effect">Interaction Effect</a></li>
+  <li><a href="#feature-effects-1" id="toc-feature-effects-1" class="nav-link" data-scroll-target="#feature-effects-1">Feature Effects</a></li>
   <li><a href="#effect-importance-1" id="toc-effect-importance-1" class="nav-link" data-scroll-target="#effect-importance-1">Effect Importance</a></li>
   <li><a href="#conditional-expectation-1" id="toc-conditional-expectation-1" class="nav-link" data-scroll-target="#conditional-expectation-1">Conditional Expectation</a></li>
   <li><a href="#additive-attribution-1" id="toc-additive-attribution-1" class="nav-link" data-scroll-target="#additive-attribution-1">Additive Attribution</a></li>
@@ -232,10 +235,27 @@ window.Quarto = {
 
 <section id="introduction" class="level2">
 <h2 class="anchored" data-anchor-id="introduction">Introduction</h2>
-<p>In modern actuarial science, there is often a tension between predictive accuracy and model transparency. While ensemble tree-based models like <strong>Gradient Boosting Machines (GBMs)</strong> frequently outperform traditional <strong>Generalized Linear Models (GLMs)</strong>, their black-box nature presents significant hurdles for model governance, regulatory filing, and price filing.</p>
-<p>This notebook demonstrates a solution using <strong>Maximum Interpretation Decomposition (MID)</strong> via the <code>{midr}</code> and <code>{midnight}</code> packages in R. MID is a functional decomposition framework that acts as a high-fidelity surrogate for complex models. It decomposes black-box predictions into <strong>main effects</strong>, the isolated impact of each individual feature on the response, and <strong>interaction effects</strong>, the joint impact of feature pairs.</p>
-<p>By replicating a black-box model with this structured additive approach, we can quantify the “unexplained” variance and derive an interpretable model that captures the superior predictive power of machine learning without sacrificing clarity.</p>
-<p>We begin by setting up the environment.</p>
+<p>In modern actuarial science, there is an inherent tension between predictive accuracy and model transparency. While ensemble tree-based models like <strong>Gradient Boosting Machines (GBMs)</strong> frequently outperform traditional <strong>Generalized Linear Models (GLMs)</strong>, their “black-box” nature presents significant hurdles for model governance, regulatory compliance, and price filing.</p>
+<p>This notebook demonstrates a solution using <strong>Maximum Interpretation Decomposition (MID)</strong> via the <code>{midr}</code> and <code>{midnight}</code> packages in R.</p>
+<section id="what-is-mid" class="level3">
+<h3 class="anchored" data-anchor-id="what-is-mid">What is MID?</h3>
+<p>MID is a functional decomposition framework that acts as a high-fidelity surrogate for complex models. It deconstructs a black-box prediction function <span class="math inline">\(f(\mathbf{x})\)</span> into several interpretable components: intercept <span class="math inline">\(g_\emptyset\)</span>, main effects <span class="math inline">\(g_j(x_j)\)</span>, and interaction effects <span class="math inline">\(g_{jk}(x_j, x_k)\)</span>. The prediction is represented as the following additive structure:</p>
+<p><span class="math display">\[
+f(\mathbf{x}) = g_\emptyset + \sum_{j} g_j(x_{j}) + \sum_{j &lt; k} g_{jk}(x_{j},\;x_{k}) + \dots + g_D(\mathbf{x})
+\]</span></p>
+<p>To ensure the uniqueness and interpretability of each component, MID imposes vanishing conditional expectation constraints:</p>
+<p><span class="math display">\[
+\begin{aligned}
+\mathbf{E}\left[g_j(X_j)\right] &amp;= 0 \\
+\mathbf{E}\left[g_{jk}(X_j, X_k) \mid X_j = x_j\right] &amp;= 0 \quad (\forall x_j) \\
+\mathbf{E}\left[g_{jk}(X_j, X_k) \mid X_k = x_k\right] &amp;= 0 \quad (\forall x_k)
+\end{aligned}
+\]</span></p>
+<p>By replicating a black-box model with this structured approach, we can quantify the “uninterpreted” variance (captured by <span class="math inline">\(g_D(\mathbf{x})\)</span>) and derive a representation that captures the superior predictive power of machine learning without sacrificing actuarial clarity.</p>
+</section>
+<section id="setting-up" class="level3">
+<h3 class="anchored" data-anchor-id="setting-up">Setting Up</h3>
+<p>We begin by setting up the environment and loading the necessary libraries.</p>
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
@@ -260,7 +280,7 @@ window.Quarto = {
 <span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>test  <span class="ot">&lt;-</span> <span class="fu">read_parquet</span>(<span class="st">"../data/test.parquet"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
-<p>A key component of our evaluation is the Weighted Poisson Deviance defined as follows.</p>
+<p>A key component of our evaluation is the <strong>Weighted Mean Poisson Deviance</strong> defined as follows.</p>
 <p><span class="math display">\[
 L(\mathbf{y}, \hat{\mathbf{y}}, \mathbf{w}) = \frac{2 \sum_{i=1}^n w_i \left( y_i \log(y_i/\hat{y}_i) - (y_i - \hat{y}_i) \right)}{\sum_{i=1}^n w_i}
 \]</span></p>
@@ -279,11 +299,10 @@ L(\mathbf{y}, \hat{\mathbf{y}}, \mathbf{w}) = \frac{2 \sum_{i=1}^n w_i \left( y_
 </details>
 </div>
 </section>
+</section>
 <section id="the-interpretable-baseline-gam" class="level2">
-<h2 class="anchored" data-anchor-id="the-interpretable-baseline-gam">The Interpretable Baseline (GAM)</h2>
+<h2 class="anchored" data-anchor-id="the-interpretable-baseline-gam">The Interpretable Baseline: GAM</h2>
 <p>We first fit a GAM to establish a transparent benchmark. Since GAMs are additive by design, they provide a “ground truth” model structure to be recovered by the functional decomposition.</p>
-<section id="predictive-modeling" class="level3">
-<h3 class="anchored" data-anchor-id="predictive-modeling">Predictive Modeling</h3>
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
@@ -352,13 +371,12 @@ Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</code></pre>
 <span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">y_pred =</span> pred_fit_gam,</span>
 <span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">sample_weight =</span> test<span class="sc">$</span>Exposure</span>
 <span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"Mean Poisson Deviance of GAM:"</span>, deviance)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"Mean Poisson Deviance:"</span>, deviance)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-stdout">
-<pre><code>Mean Poisson Deviance of GAM: 0.4679338</code></pre>
+<pre><code>Mean Poisson Deviance: 0.4679338</code></pre>
 </div>
 </div>
-</section>
 <section id="surrogate-modeling" class="level3">
 <h3 class="anchored" data-anchor-id="surrogate-modeling">Surrogate Modeling</h3>
 <p>We apply the <code>interpret()</code> function to the GAM. This step serves as a sanity check: if MID is effective, it should perfectly replicate the predictive behavior of the original GAM.</p>
@@ -415,61 +433,53 @@ Region       factor(7)</code></pre>
 <span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">y_pred =</span> pred_mid_gam,</span>
 <span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">sample_weight =</span> test<span class="sc">$</span>Exposure</span>
 <span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"Mean Poisson Deviance of Surrogate(GAM):"</span>, deviance)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"Mean Poisson Deviance:"</span>, deviance)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-stdout">
-<pre><code>Mean Poisson Deviance of Surrogate(GAM): 0.4679292</code></pre>
+<pre><code>Mean Poisson Deviance: 0.4679292</code></pre>
 </div>
 </div>
 </section>
 <section id="model-fidelity" class="level3">
 <h3 class="anchored" data-anchor-id="model-fidelity">Model Fidelity</h3>
-<p>One way to measure the surrogate model <strong>fidelity</strong>, i.e., how closely the surrogate model replicates the original model, is to calculate the <span class="math inline">\(R^2\)</span> measure between the original model’s predictions <span class="math inline">\(\mathbf{y}\)</span> and the surrogate’s predictions <span class="math inline">\(\hat{\mathbf{y}}\)</span>.</p>
+<p>To assess model <strong>fidelity</strong>, i.e., how closely the surrogate replicates the black-box, we calculate the <strong>uninterpreted variation ratio</strong> <span class="math inline">\(\mathbf{U}\)</span>.</p>
 <p><span class="math display">\[
-R^2(\mathbf{y},\hat{\mathbf{y}}) = 1 - \frac{\sum_{i=1}^n ({y_i}-\hat{y}_i)^2} {\sum_{i=1}^n (y_i-\bar{y}_i)^2}
+\mathbf{U}(f,g) = \frac{\sum_{i=1}^n (f(x_i) - g(x_i))^2}{\sum_{i=1}^n (f(x_i) - \bar{f})^2}, \quad \text{where } \bar{f} = \frac{1}{n}\sum_{i=1}^n f(x_i)
 \]</span></p>
-<p>The <strong>Uninterpreted Variation Ratio</strong></p>
-<p>As shown by the <span class="math inline">\(R^2\)</span> score on the linear predictor (log) scale, the MID surrogate achieves near-perfect fidelity here.</p>
+<p>This metric represents the proportion of the black-box model’s variance that is not captured by the additive components of the MID model. The R-squared score, <span class="math inline">\(\mathbf{R}^2(f,g) = 1 - \mathbf{U}(f,g)\)</span>, is a standard measure for this purpose. It is important to note that this <span class="math inline">\(\mathbf{R}^2\)</span> measures the fidelity to the black-box model, not the predictive accuracy relative to the ground truth observations.</p>
+<p>In the <code>{midr}</code> package, the summary output includes this ratio calculated on the training set. For models with non-linear links (e.g., Poisson regression), the “working” ratio is computed on the scale of the link function (e.g., <span class="math inline">\(\log\)</span> scale).</p>
+<p>To rigorously confirm the model fidelity, it is recommended to evaluate these metrics on a separate testing set. This ensures that the surrogate model is not just over-fitting the training predictions but has truly captured the underlying functional structure.</p>
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">42</span>)</span>
-<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a><span class="co"># calculate R-squared on testing dataset</span></span>
-<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>R2_mid <span class="ot">&lt;-</span> <span class="fu">weighted.loss</span>(</span>
-<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">x =</span> <span class="fu">log</span>(pred_fit_gam),</span>
-<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">y =</span> <span class="fu">log</span>(pred_mid_gam),</span>
-<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">w =</span> test<span class="sc">$</span>Exposure,</span>
-<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">method =</span> <span class="st">"r2"</span></span>
-<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="fu">sprintf</span>(<span class="st">"R-squared: %.6f"</span>, R2_mid))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="co"># calculate R-squared on testing dataset</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>R2_mid <span class="ot">&lt;-</span> <span class="fu">weighted.loss</span>(</span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">x =</span> <span class="fu">log</span>(pred_fit_gam),</span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">y =</span> <span class="fu">log</span>(pred_mid_gam),</span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">w =</span> test<span class="sc">$</span>Exposure,</span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">method =</span> <span class="st">"r2"</span></span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="fu">sprintf</span>(<span class="st">"R-squared: %.6f"</span>, R2_mid))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-stdout">
 <pre><code>R-squared: 0.999963</code></pre>
 </div>
 </div>
+<p>As shown by the high <span class="math inline">\(\mathbf{R}^2\)</span> score, the MID surrogate achieves near-perfect fidelity. This level of agreement justifies using the MID components (main effects and interactions) as a reliable lens through which to interpret the original black-box model’s behavior.</p>
+</section>
+<section id="feature-effects" class="level3">
+<h3 class="anchored" data-anchor-id="feature-effects">Feature Effects</h3>
+<p>Visualizing the functional behavior of each component allows for a direct comparison between the MID surrogate’s decomposition and the original GAM’s structure.</p>
+<ul>
+<li>MID Surrogate</li>
+</ul>
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="co"># feature effects of GAM</span></span>
+<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="co"># main effects of MID surrogate</span></span>
 <span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a><span class="fu">par.midr</span>(<span class="at">mfrow =</span> <span class="fu">c</span>(<span class="dv">2</span>, <span class="dv">4</span>))</span>
-<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a><span class="fu">termplot</span>(fit_gam)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</details>
-<div class="cell-output-display">
-<div>
-<figure class="figure">
-<p><img src="demo_r_files/figure-html/effects_fit_gam-1.png" class="img-fluid figure-img" width="672"></p>
-</figure>
-</div>
-</div>
-</div>
-<div class="cell">
-<details class="code-fold">
-<summary>Code</summary>
-<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="co"># main effects of MID surrogate</span></span>
-<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a><span class="fu">par.midr</span>(<span class="at">mfrow =</span> <span class="fu">c</span>(<span class="dv">2</span>, <span class="dv">4</span>))</span>
-<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a><span class="fu">mid.plots</span>(mid_gam, <span class="at">engine =</span> <span class="st">"graphics"</span>, <span class="at">ylab =</span> <span class="st">"Main Effect"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a><span class="fu">mid.plots</span>(mid_gam, <span class="at">engine =</span> <span class="st">"graphics"</span>, <span class="at">ylab =</span> <span class="st">"Main Effect"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output-display">
 <div>
@@ -479,13 +489,31 @@ R^2(\mathbf{y},\hat{\mathbf{y}}) = 1 - \frac{\sum_{i=1}^n ({y_i}-\hat{y}_i)^2} {
 </div>
 </div>
 </div>
-<p>We can also visualize prediction surface with the S3 method of the <code>persp()</code> function for MID models.</p>
+<ul>
+<li>Original GAM</li>
+</ul>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="co"># feature effects of GAM</span></span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a><span class="fu">par.midr</span>(<span class="at">mfrow =</span> <span class="fu">c</span>(<span class="dv">2</span>, <span class="dv">4</span>))</span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a><span class="fu">termplot</span>(fit_gam)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="demo_r_files/figure-html/effects_fit_gam-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>Furthermore, we can visualize the joint effects of feature pairs as 3D prediction surfaces using the S3 method for the <code>persp()</code> function.</p>
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="fu">par.midr</span>(<span class="at">mar =</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">0</span>, <span class="dv">1</span>, <span class="dv">0</span>), <span class="at">mfrow =</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>))</span>
-<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a><span class="fu">persp</span>(mid_gam, <span class="st">"LogDensity:DrivAge"</span>, <span class="at">theta =</span> <span class="dv">225</span>, <span class="at">phi =</span> <span class="dv">40</span>, <span class="at">shade =</span> .<span class="dv">5</span>)</span>
-<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a><span class="fu">persp</span>(mid_gam, <span class="st">"LogDensity:Region"</span>, <span class="at">theta =</span> <span class="dv">225</span>, <span class="at">phi =</span> <span class="dv">40</span>, <span class="at">shade =</span> .<span class="dv">5</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a><span class="fu">persp</span>(mid_gam, <span class="st">"DrivAge:LogDensity"</span>, <span class="at">theta =</span> <span class="dv">45</span>, <span class="at">phi =</span> <span class="dv">40</span>)</span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a><span class="fu">persp</span>(mid_gam, <span class="st">"LogDensity:Region"</span>, <span class="at">theta =</span> <span class="sc">-</span><span class="dv">45</span>, <span class="at">phi =</span> <span class="dv">40</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output-display">
 <div>
@@ -498,9 +526,9 @@ R^2(\mathbf{y},\hat{\mathbf{y}}) = 1 - \frac{\sum_{i=1}^n ({y_i}-\hat{y}_i)^2} {
 </section>
 <section id="effect-importance" class="level3">
 <h3 class="anchored" data-anchor-id="effect-importance">Effect Importance</h3>
-<p>Beyond simple plots for feature effects, <code>{midr}</code> provides a suite of diagnostic tools. First, we can quantify feature importance measured as follows:</p>
+<p>Beyond simple plots for feature effects, <code>{midr}</code> provides a suite of diagnostic tools. First, the <strong>Effect Importance</strong> of a term <span class="math inline">\(j\)</span> is defined as the mean absolute contribution of that term across the population:</p>
 <p><span class="math display">\[
-\text{Importance}_j=\mathbf{E}\left[\left| f_j(\mathbf{X}) \right|\right]
+\text{Importance}_j = \mathbf{E} \left[ | g_j(X_j) | \right] \approx \frac{1}{n} \sum_{i=1}^n | g_j(x_{ij}) |
 \]</span></p>
 <div class="cell">
 <details class="code-fold">
@@ -526,10 +554,14 @@ R^2(\mathbf{y},\hat{\mathbf{y}}) = 1 - \frac{\sum_{i=1}^n ({y_i}-\hat{y}_i)^2} {
 </div>
 </div>
 </div>
+<p>For interaction terms, the importance is similarly calculated using <span class="math inline">\(g_{jk}(X_j, X_k)\)</span>. This metric allows us to rank features by their average influence on the model’s predictions.</p>
 </section>
 <section id="conditional-expectation" class="level3">
 <h3 class="anchored" data-anchor-id="conditional-expectation">Conditional Expectation</h3>
-<p>Second, we can explore individual conditional expectations (ICE) of the fitted MID model.</p>
+<p>Second, we can explore <strong>Individual Conditional Expectations (ICE)</strong>. In the MID framework, the ICE for a feature <span class="math inline">\(j\)</span> and a specific observation <span class="math inline">\(i\)</span> is the expected value of the prediction as <span class="math inline">\(X_j\)</span> varies, while keeping other features fixed at their observed values <span class="math inline">\(\mathbf{x}_{\setminus j}^{(i)}\)</span>:</p>
+<p><span class="math display">\[
+\text{ICE}_j^{(i)}(x) = g_\emptyset + g_j(x) + \sum_{k \neq j} g_{jk}(x, x_{ik})
+\]</span></p>
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
@@ -556,10 +588,14 @@ R^2(\mathbf{y},\hat{\mathbf{y}}) = 1 - \frac{\sum_{i=1}^n ({y_i}-\hat{y}_i)^2} {
 </div>
 </div>
 </div>
+<p>Unlike standard black-box models, MID’s low-order structure allows us to compute these expectations efficiently and interpret the variation across curves (the “thickness” of the ICE plot) as a direct consequence of specified interaction terms <span class="math inline">\(g_{jk}\)</span>.</p>
 </section>
 <section id="additive-attribution" class="level3">
 <h3 class="anchored" data-anchor-id="additive-attribution">Additive Attribution</h3>
-<p>Third, we can perform instance-level attribution through additive breakdown plots, which are directly derived from the functional decomposition.</p>
+<p>Third, we perform instance-level explanation through an Additive Breakdown of the prediction. For any single observation <span class="math inline">\(\mathbf{x}\)</span>, the MID surrogate’s prediction <span class="math inline">\(g(\mathbf{x})\)</span> is decomposed into the exact sum of its functional components:</p>
+<p><span class="math display">\[
+g(\mathbf{x}) = \underbrace{g_\emptyset}_{\text{Intercept}} + \underbrace{\sum_{j} g_j(x_j)}_{\text{Main Effects}} + \underbrace{\sum_{j &lt; k} g_{jk}(x_j, x_k)}_{\text{Interactions}}
+\]</span></p>
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
@@ -568,19 +604,20 @@ R^2(\mathbf{y},\hat{\mathbf{y}}) = 1 - \frac{\sum_{i=1}^n ({y_i}-\hat{y}_i)^2} {
 <span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>bd_list <span class="ot">&lt;-</span> <span class="fu">lapply</span>(</span>
 <span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a>  row_ids,</span>
 <span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a>  <span class="cf">function</span>(x) {</span>
-<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a>    res <span class="ot">&lt;-</span> <span class="fu">mid.breakdown</span>(mid_gam, train, <span class="at">row =</span> x, <span class="at">format =</span> <span class="st">"%.6s"</span>)</span>
-<span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a>    <span class="fu">structure</span>(res, <span class="at">row_id =</span> x)</span>
-<span id="cb18-8"><a href="#cb18-8" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb18-9"><a href="#cb18-9" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb18-10"><a href="#cb18-10" aria-hidden="true" tabindex="-1"></a>bd_plots <span class="ot">&lt;-</span> <span class="fu">lapply</span>(</span>
-<span id="cb18-11"><a href="#cb18-11" aria-hidden="true" tabindex="-1"></a>  bd_list, <span class="cf">function</span>(x) {</span>
-<span id="cb18-12"><a href="#cb18-12" aria-hidden="true" tabindex="-1"></a>    label <span class="ot">&lt;-</span> <span class="fu">paste0</span>(<span class="st">"Breakdown of Row "</span>, <span class="fu">attr</span>(x, <span class="st">"row_id"</span>))</span>
-<span id="cb18-13"><a href="#cb18-13" aria-hidden="true" tabindex="-1"></a>    <span class="fu">ggmid</span>(x, <span class="at">theme =</span> <span class="st">"shap"</span>) <span class="sc">+</span></span>
-<span id="cb18-14"><a href="#cb18-14" aria-hidden="true" tabindex="-1"></a>      <span class="fu">labs</span>(<span class="at">x =</span> <span class="cn">NULL</span>, <span class="at">subtitle =</span> label) <span class="sc">+</span></span>
-<span id="cb18-15"><a href="#cb18-15" aria-hidden="true" tabindex="-1"></a>      <span class="fu">theme</span>(<span class="at">legend.position =</span> <span class="st">"none"</span>)</span>
-<span id="cb18-16"><a href="#cb18-16" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb18-17"><a href="#cb18-17" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb18-18"><a href="#cb18-18" aria-hidden="true" tabindex="-1"></a><span class="fu">grid.arrange</span>(<span class="at">grobs =</span> bd_plots)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a>    res <span class="ot">&lt;-</span> <span class="fu">mid.breakdown</span>(mid_gam, train, <span class="at">row =</span> x,</span>
+<span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a>                         <span class="at">format =</span> <span class="fu">list</span>(<span class="at">LogDensity =</span> <span class="st">"%.2f"</span>))</span>
+<span id="cb18-8"><a href="#cb18-8" aria-hidden="true" tabindex="-1"></a>    <span class="fu">structure</span>(res, <span class="at">row_id =</span> x)</span>
+<span id="cb18-9"><a href="#cb18-9" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb18-10"><a href="#cb18-10" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb18-11"><a href="#cb18-11" aria-hidden="true" tabindex="-1"></a>bd_plots <span class="ot">&lt;-</span> <span class="fu">lapply</span>(</span>
+<span id="cb18-12"><a href="#cb18-12" aria-hidden="true" tabindex="-1"></a>  bd_list, <span class="cf">function</span>(x) {</span>
+<span id="cb18-13"><a href="#cb18-13" aria-hidden="true" tabindex="-1"></a>    label <span class="ot">&lt;-</span> <span class="fu">paste0</span>(<span class="st">"Breakdown of Row "</span>, <span class="fu">attr</span>(x, <span class="st">"row_id"</span>))</span>
+<span id="cb18-14"><a href="#cb18-14" aria-hidden="true" tabindex="-1"></a>    <span class="fu">ggmid</span>(x, <span class="at">theme =</span> <span class="st">"shap"</span>) <span class="sc">+</span></span>
+<span id="cb18-15"><a href="#cb18-15" aria-hidden="true" tabindex="-1"></a>      <span class="fu">labs</span>(<span class="at">x =</span> <span class="cn">NULL</span>, <span class="at">subtitle =</span> label) <span class="sc">+</span></span>
+<span id="cb18-16"><a href="#cb18-16" aria-hidden="true" tabindex="-1"></a>      <span class="fu">theme</span>(<span class="at">legend.position =</span> <span class="st">"none"</span>)</span>
+<span id="cb18-17"><a href="#cb18-17" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb18-18"><a href="#cb18-18" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb18-19"><a href="#cb18-19" aria-hidden="true" tabindex="-1"></a><span class="fu">grid.arrange</span>(<span class="at">grobs =</span> bd_plots)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output-display">
 <div>
@@ -590,11 +627,12 @@ R^2(\mathbf{y},\hat{\mathbf{y}}) = 1 - \frac{\sum_{i=1}^n ({y_i}-\hat{y}_i)^2} {
 </div>
 </div>
 </div>
+<p>By visualizing these contributions in a waterfall plot, we can identify which specific risk factors or interaction effects drove the prediction for a particular instance, such as a high-risk policyholder.</p>
 </section>
 </section>
-<section id="black-box-gbm" class="level2">
-<h2 class="anchored" data-anchor-id="black-box-gbm">Black-Box GBM</h2>
-<p>While GAMs are transparent, GBMs such as <strong>LightGBM</strong> often yields superior predictive power by capturing high-order interactions. However, this accuracy comes at the cost of being a black box. Here, we train a LightGBM model using optimized hyperparameters to achieve high predictive performance.</p>
+<section id="the-black-box-lightgbm" class="level2">
+<h2 class="anchored" data-anchor-id="the-black-box-lightgbm">The Black-Box: LightGBM</h2>
+<p>While GAMs are transparent, GBMs such as <strong>LightGBM</strong> often yield superior predictive power by capturing high-order interactions. However, this accuracy comes at the cost of being a black box.</p>
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
@@ -716,17 +754,20 @@ Objective: poisson
 Fitted to dataset with 7 columns</code></pre>
 </div>
 </div>
-<p>The weighted mean Poisson deviance of the fitted LightGBM is around 0.4655023, which is better than the GAM’s performance.</p>
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="co"># evaluate model</span></span>
+<div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="co"># evaluate fitted model</span></span>
 <span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>pred_fit_lgb <span class="ot">&lt;-</span> <span class="fu">predict</span>(</span>
 <span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>  fit_lgb, <span class="fu">data.matrix</span>(<span class="fu">select</span>(test, <span class="sc">-</span>Frequency, <span class="sc">-</span>Exposure))</span>
 <span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a>)</span>
 <span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-6"><a href="#cb23-6" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"Mean Poisson Deviance:"</span>,</span>
-<span id="cb23-7"><a href="#cb23-7" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mean_poisson_deviance</span>(test<span class="sc">$</span>Frequency, pred_fit_lgb, test<span class="sc">$</span>Exposure))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb23-6"><a href="#cb23-6" aria-hidden="true" tabindex="-1"></a>deviance <span class="ot">&lt;-</span> <span class="fu">mean_poisson_deviance</span>(</span>
+<span id="cb23-7"><a href="#cb23-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">y_true =</span> test<span class="sc">$</span>Frequency,</span>
+<span id="cb23-8"><a href="#cb23-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">y_pred =</span> pred_fit_lgb,</span>
+<span id="cb23-9"><a href="#cb23-9" aria-hidden="true" tabindex="-1"></a>  <span class="at">sample_weight =</span> test<span class="sc">$</span>Exposure</span>
+<span id="cb23-10"><a href="#cb23-10" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb23-11"><a href="#cb23-11" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"Mean Poisson Deviance:"</span>, deviance)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-stdout">
 <pre><code>Mean Poisson Deviance: 0.4655023</code></pre>
@@ -734,7 +775,10 @@ Fitted to dataset with 7 columns</code></pre>
 </div>
 <section id="surrogate-modeling-1" class="level3">
 <h3 class="anchored" data-anchor-id="surrogate-modeling-1">Surrogate Modeling</h3>
-<p>We now use <code>{midr}</code> to replicate the LightGBM model. By including interaction terms in the model formula, we allow the surrogate to capture two-way joint relationships of features that the GBM might have learned from the data.</p>
+<p>We now use <code>{midr}</code> to replicate the LightGBM model. By including interaction terms in the model formula, we allow the surrogate to capture the joint relationships that the GBM has learned. The goal is to approximate the LightGBM function <span class="math inline">\(f_{LGB}(\mathbf{x})\)</span> with our interpretable structure <span class="math inline">\(g(\mathbf{x})\)</span>:</p>
+<p><span class="math display">\[
+f_{LGB}(\mathbf{x}) \approx g(\mathbf{x}) = g_\emptyset + \sum_{j} g_j(x_j) + \sum_{j &lt; k} g_{jk}(x_j, x_k)
+\]</span></p>
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
@@ -788,10 +832,15 @@ Region       factor(7)   factor(7)</code></pre>
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb27"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a>pred_mid_lgb <span class="ot">=</span> <span class="fu">predict</span>(mid_lgb, test, <span class="at">type =</span> <span class="st">"response"</span>)</span>
-<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"Mean Poisson Deviance:"</span>,</span>
-<span id="cb27-4"><a href="#cb27-4" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mean_poisson_deviance</span>(test<span class="sc">$</span>Frequency, pred_mid_lgb, test<span class="sc">$</span>Exposure))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb27"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="co"># evaluate fitted surrogate</span></span>
+<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>pred_mid_lgb <span class="ot">=</span> <span class="fu">predict</span>(mid_lgb, test, <span class="at">type =</span> <span class="st">"response"</span>)</span>
+<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-4"><a href="#cb27-4" aria-hidden="true" tabindex="-1"></a>deviance <span class="ot">&lt;-</span> <span class="fu">mean_poisson_deviance</span>(</span>
+<span id="cb27-5"><a href="#cb27-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">y_true =</span> test<span class="sc">$</span>Frequency,</span>
+<span id="cb27-6"><a href="#cb27-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">y_pred =</span> pred_mid_lgb,</span>
+<span id="cb27-7"><a href="#cb27-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">sample_weight =</span> test<span class="sc">$</span>Exposure</span>
+<span id="cb27-8"><a href="#cb27-8" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb27-9"><a href="#cb27-9" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"Mean Poisson Deviance:"</span>, deviance)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-stdout">
 <pre><code>Mean Poisson Deviance: 0.4670904</code></pre>
@@ -800,28 +849,27 @@ Region       factor(7)   factor(7)</code></pre>
 </section>
 <section id="model-fidelity-1" class="level3">
 <h3 class="anchored" data-anchor-id="model-fidelity-1">Model Fidelity</h3>
+<p>To measure how successfully our surrogate replicates the LightGBM model, we use the R-squared score on the link scale (<span class="math inline">\(\log\)</span> scale).</p>
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb29"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a><span class="fu">theme_set</span>(<span class="fu">theme_midr</span>(<span class="st">"xy"</span>))</span>
-<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a><span class="co"># calculate R-squared on testing dataset</span></span>
-<span id="cb29-4"><a href="#cb29-4" aria-hidden="true" tabindex="-1"></a>R2_mid <span class="ot">&lt;-</span> <span class="fu">weighted.loss</span>(</span>
-<span id="cb29-5"><a href="#cb29-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">x =</span> <span class="fu">log</span>(pred_fit_lgb),</span>
-<span id="cb29-6"><a href="#cb29-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">y =</span> <span class="fu">log</span>(pred_mid_lgb),</span>
-<span id="cb29-7"><a href="#cb29-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">w =</span> test<span class="sc">$</span>Exposure,</span>
-<span id="cb29-8"><a href="#cb29-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">method =</span> <span class="st">"r2"</span></span>
-<span id="cb29-9"><a href="#cb29-9" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb29-10"><a href="#cb29-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb29-11"><a href="#cb29-11" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="fu">sprintf</span>(<span class="st">"R-squared: %.4f"</span>, R2_mid))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb29"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a><span class="co"># calculate R-squared on testing dataset</span></span>
+<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a>R2_mid <span class="ot">&lt;-</span> <span class="fu">weighted.loss</span>(</span>
+<span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">x =</span> <span class="fu">log</span>(pred_fit_lgb),</span>
+<span id="cb29-4"><a href="#cb29-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">y =</span> <span class="fu">log</span>(pred_mid_lgb),</span>
+<span id="cb29-5"><a href="#cb29-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">w =</span> test<span class="sc">$</span>Exposure,</span>
+<span id="cb29-6"><a href="#cb29-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">method =</span> <span class="st">"r2"</span></span>
+<span id="cb29-7"><a href="#cb29-7" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb29-8"><a href="#cb29-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb29-9"><a href="#cb29-9" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="fu">sprintf</span>(<span class="st">"R-squared: %.4f"</span>, R2_mid))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-stdout">
 <pre><code>R-squared: 0.9295</code></pre>
 </div>
 </div>
 </section>
-<section id="main-effect" class="level3">
-<h3 class="anchored" data-anchor-id="main-effect">Main Effect</h3>
+<section id="feature-effects-1" class="level3">
+<h3 class="anchored" data-anchor-id="feature-effects-1">Feature Effects</h3>
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
@@ -836,10 +884,7 @@ Region       factor(7)   factor(7)</code></pre>
 </div>
 </div>
 </div>
-</section>
-<section id="interaction-effect" class="level3">
-<h3 class="anchored" data-anchor-id="interaction-effect">Interaction Effect</h3>
-<p>One of the important features of <code>{midr}</code> is its ability to isolate interaction effects. In this section, we visualize how geographical <code>Region</code> interacts with <code>LogDensity</code>. These insights are often hidden in GBMs but are critical in actuarial practice.</p>
+<p>A key advantage of <code>{midr}</code> is its ability to isolate interaction effects <span class="math inline">\(g_{jk}\)</span> from main effects <span class="math inline">\(g_j\)</span>. This is particularly useful to understand the joint impact of two variables (e.g., <code>Region</code> and <code>LogDensity</code>).</p>
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
@@ -867,8 +912,8 @@ Region       factor(7)   factor(7)</code></pre>
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb33"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a><span class="fu">par.midr</span>(<span class="at">mar =</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">0</span>, <span class="dv">1</span>, <span class="dv">0</span>), <span class="at">mfrow =</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>))</span>
-<span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a><span class="fu">persp</span>(mid_lgb, <span class="st">"LogDensity:DrivAge"</span>, <span class="at">theta =</span> <span class="dv">225</span>, <span class="at">phi =</span> <span class="dv">40</span>, <span class="at">shade =</span> .<span class="dv">5</span>)</span>
-<span id="cb33-3"><a href="#cb33-3" aria-hidden="true" tabindex="-1"></a><span class="fu">persp</span>(mid_lgb, <span class="st">"LogDensity:Region"</span>, <span class="at">theta =</span> <span class="dv">225</span>, <span class="at">phi =</span> <span class="dv">40</span>, <span class="at">shade =</span> .<span class="dv">5</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a><span class="fu">persp</span>(mid_lgb, <span class="st">"DrivAge:LogDensity"</span>, <span class="at">theta =</span> <span class="dv">45</span>, <span class="at">phi =</span> <span class="dv">40</span>)</span>
+<span id="cb33-3"><a href="#cb33-3" aria-hidden="true" tabindex="-1"></a><span class="fu">persp</span>(mid_lgb, <span class="st">"LogDensity:Region"</span>, <span class="at">theta =</span> <span class="sc">-</span><span class="dv">45</span>, <span class="at">phi =</span> <span class="dv">40</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output-display">
 <div>
@@ -881,6 +926,7 @@ Region       factor(7)   factor(7)</code></pre>
 </section>
 <section id="effect-importance-1" class="level3">
 <h3 class="anchored" data-anchor-id="effect-importance-1">Effect Importance</h3>
+<p>To rank the influence of each component discovered in the LightGBM model, we calculate the Effect Importance, defined as the average absolute contribution.</p>
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
@@ -909,6 +955,7 @@ Region       factor(7)   factor(7)</code></pre>
 </section>
 <section id="conditional-expectation-1" class="level3">
 <h3 class="anchored" data-anchor-id="conditional-expectation-1">Conditional Expectation</h3>
+<p>We further explore the model’s behavior using the ICE plot. In the MID framework, the variation in ICE curves for a feature <span class="math inline">\(j\)</span> is explicitly governed by the interaction terms <span class="math inline">\(g_{jk}\)</span> identified from the LightGBM model.</p>
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
@@ -938,6 +985,7 @@ Region       factor(7)   factor(7)</code></pre>
 </section>
 <section id="additive-attribution-1" class="level3">
 <h3 class="anchored" data-anchor-id="additive-attribution-1">Additive Attribution</h3>
+<p>Finally, we perform an Additive Breakdown for individual predictions. This provides an exact allocation of the LightGBM’s prediction into the terms of our surrogate model.</p>
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
@@ -976,7 +1024,10 @@ Region       factor(7)   factor(7)</code></pre>
 </section>
 <section id="conclusion" class="level2">
 <h2 class="anchored" data-anchor-id="conclusion">Conclusion</h2>
-<p>By using <code>{midr}</code>, we have transformed a complex LightGBM model into a set of interpretable charts and attributions.</p>
+<p>In this notebook, we have demonstrated how <strong>Maximum Interpretation Decomposition (MID)</strong> bridges the gap between predictive performance and model transparency. By using the <code>{midr}</code> package, we successfully transformed a complex LightGBM model into a structured, additive representation.</p>
+<p>While the surrogate model fidelity may not always be perfect, the crucial advantage lies in our ability to quantify its limitations. Through the <strong>uninterpreted variation ratio</strong>, we can directly assess the complexity of the black-box model. If the fidelity is lower than expected, it serves as a diagnostic signal that the original model relies on high-order interactions or structural complexities that extend beyond second-order effects.</p>
+<p>Knowing the extent of this “unexplained” variance is far more valuable than operating in the dark. It allows actuaries to make informed decisions about whether the additional complexity of a black-box model is justified by its performance, or if a more transparent structure is preferable for regulatory and risk management purposes.</p>
+<p>As machine learning models become increasingly prevalent in insurance pricing and reserving, tools like MID will be essential for ensuring that our “black-boxes” remain accountable, reliable, and fundamentally understood.</p>
 
 
 </section>
