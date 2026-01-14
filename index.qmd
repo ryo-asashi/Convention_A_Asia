@@ -23,8 +23,8 @@ This project demonstrates the application of **Maximum Interpretation Decomposit
 This Quarto website contains the following sections:
 
 1.  [**Dataset**](./notebooks/dataset.html): Data cleaning and feature engineering of the French Motor Third-Party Liability dataset.
-2.  [**R Demo**](./notebooks/demo_r.html): A demonstration of the `{midr}` and `{midlearn}` packages in **R**.
-3.  [**Python Demo**](./notebooks/demo_py.html): A demonstration of the `{midlearn}` library, providing a seamless interface for **Python** users.
+2.  [**R Demo**](./notebooks/demo_r.html): A demonstration of the `{midr}` and `{midlearn}` packages in R.
+3.  [**Python Demo**](./notebooks/demo_py.html): A demonstration of the `{midlearn}` library, providing a seamless interface for Python users.
 
 ------------------------------------------------------------------------
 
