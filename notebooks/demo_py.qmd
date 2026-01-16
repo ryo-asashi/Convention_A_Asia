@@ -1,17 +1,290 @@
 ---
-title: "Python Demo"
+title: "Surrogate Modeling with MID in Python"
 ---
 
-```{python, eval = FALSE}
+## Introduction
+
+In modern actuarial science, there is an inherent tension between predictive accuracy and model transparency.
+While ensemble tree-based models like **Gradient Boosting Machines (GBMs)** frequently outperform traditional **Generalized Linear Models (GLMs)**, their "black-box" nature presents significant hurdles for model governance, regulatory compliance, and price filing.
+
+This notebook demonstrates a solution using **Maximum Interpretation Decomposition (MID)** via the `{midlearn}` library in Python.
+
+::: {.callout-warning}
+## Compatibility Notice
+This article relies on features introduced in **midr (>= 0.5.2.906)** and **midlearn (>= 0.1.3)**. Please ensure your packages are up to date. Some visualization arguments are not available in earlier versions.
+:::
+
+### What is MID?
+
+MID is a functional decomposition framework that acts as a high-fidelity surrogate for complex models.
+It deconstructs a black-box prediction function $f(\mathbf{X})$ into several interpretable components: intercept $g_\emptyset$, main effects $g_j(X_j)$, and interaction effects $g_{jk}(X_j, X_k)$.
+The prediction is represented as the following additive structure:
+
+$$
+f(\mathbf{X}) = g_\emptyset + \sum_{j} g_j(X_{j}) + \sum_{j < k} g_{jk}(X_{j},\;X_{k}) + \dots + g_D(\mathbf{X})
+$$
+
+To ensure the uniqueness and interpretability of each component, MID imposes the centering constraints:
+
+$$
+\begin{aligned}
+\mathbf{E}\left[g_j(X_j)\right] &= 0 \\
+\mathbf{E}\left[g_{jk}(X_j, X_k) \mid X_j = x_j\right] &= 0 \quad (\forall x_j) \\
+\mathbf{E}\left[g_{jk}(X_j, X_k) \mid X_k = x_k\right] &= 0 \quad (\forall x_k)
+\end{aligned}
+$$
+
+By replicating a black-box model with this structured approach, we can quantify the "uninterpreted" variance (captured by $g_D(\mathbf{X})$) and derive a representation that captures the superior predictive power of machine learning without sacrificing actuarial clarity.
+
+### Setting Up
+
+We begin by setting up the environment and loading the necessary libraries.
+
+```{python, message = FALSE, warnigs = FALSE}
+# data manipulation
+import numpy as np
+import pandas as pd
+
+# predictive modeling
+# import lightgbm as lgb
+
+# surrogate modeling
 import midlearn as mid
+
+# visualization
 from plotnine import *
+
+# load training and testing datasets
+train = pd.read_parquet("../data/train.parquet")
+test  = pd.read_parquet("../data/test.parquet")
+```
+
+```{python config, include = FALSE}
+# configurations
+```
+
+A key component of our evaluation is the **Weighted Mean Poisson Deviance** defined as follows:
+
+$$
+L(\mathbf{y}, \hat{\mathbf{y}}, \mathbf{w}) = \frac{2 \sum_{i=1}^n w_i \left( y_i \log(y_i/\hat{y}_i) - (y_i - \hat{y}_i) \right)}{\sum_{i=1}^n w_i}
+$$
+
+```{python poisson_deviance}
+# define loss function
+```
+
+## The Interpretable Baseline: GAM
+
+We first fit a GAM to establish a transparent benchmark.
+Since GAMs are additive by design, they provide a "ground truth" model structure to be recovered by the functional decomposition.
+
+```{python fit_gam}
+```
+
+```{python pred_fit_gam}
+# evaluate fitted model
+```
+
+### Surrogate Modeling
+
+We apply the `interpret()` function to the GAM.
+This step serves as a sanity check: if MID is effective, it should perfectly replicate the predictive behavior of the original GAM.
+
+```{python mid_gam}
+```
+
+```{python pred_mid_gam}
+# evaluate fitted surrogate
+```
+
+### Model Fidelity
+
+To assess model **fidelity**, i.e., how closely the surrogate replicates the black-box, we calculate the **uninterpreted variation ratio** $\mathbf{U}$.
+
+$$
+\mathbf{U}(f,g) = \frac{\sum_{i=1}^n (f(x_i) - g(x_i))^2}{\sum_{i=1}^n (f(x_i) - \bar{f})^2}, \quad \text{where } \bar{f} = \frac{1}{n}\sum_{i=1}^n f(x_i)
+$$
+
+This metric represents the proportion of the black-box model's variance that is not captured by the additive components of the MID model.
+The **R-squared score**, $\mathbf{python}^2(f,g) = 1 - \mathbf{U}(f,g)$, is a standard measure for this purpose. It is important to note that this $\mathbf{python}^2$ measures the fidelity to the black-box model, not the predictive accuracy relative to the ground truth observations.
+
+In the `{midr}` package, the summary output includes this ratio calculated on the training set.
+For models with non-linear links (e.g., Poisson regression), the "working" ratio is computed on the scale of the link function (e.g., $\log$ scale).
+
+To rigorously confirm the model fidelity, it is recommended to evaluate these metrics on a separate testing set.
+This ensures that the surrogate model is not just over-fitting the training predictions but has truly captured the underlying functional structure.
+
+```{python }
+# calculate R-squared on testing dataset
+```
+
+As shown by the high $\mathbf{python}^2$ score, the MID surrogate achieves near-perfect fidelity.
+This level of agreement justifies using the MID components (main effects and interactions) as a reliable lens through which to interpret the original black-box model’s behavior.
+
+### Feature Effects
+
+Visualizing the functional behavior of each component allows for a direct comparison between the MID surrogate's decomposition and the original GAM's structure.
+
+- MID Surrogate
+
+```{python effects_mid_gam}
+# main effects of MID surrogate
+```
+
+- Original GAM
+
+```{python effects_fit_gam}
+# feature effects of GAM
+```
+
+Furthermore, we can visualize the joint effects of feature pairs as 3D prediction surfaces using the S3 method for the `persp()` function.
+
+```{python persp_mid_gam}
+```
+
+### Effect Importance
+
+Beyond simple plots for feature effects, `{midr}` provides a suite of diagnostic tools.
+First, the **Effect Importance** of a term $j$ is defined as the mean absolute contribution of that term across the population:
+
+$$
+\text{Importance}_j = \mathbf{E} \left[ | g_j(X_j) | \right] \approx \frac{1}{n} \sum_{i=1}^n | g_j(x_{ij}) |
+$$
+
+```{python imp_gam, message = FALSE}
+```
+
+For interaction terms, the importance is similarly calculated using $g_{jk}(X_j, X_k)$.
+This metric allows us to rank features by their average influence on the model's predictions.
+
+### Conditional Expectation
+
+Second, we can explore **Individual Conditional Expectations (ICE)**.
+In the MID framework, the ICE for a feature $j$ and a specific observation $i$ is the expected value of the prediction as $X_j$ varies, while keeping other features fixed at their observed values $\mathbf{x}_{\setminus j}^{(i)}$:
+
+$$
+\text{ICE}_j^{(i)}(x) = g_\emptyset + g_j(x) + \sum_{k \neq j} g_{jk}(x, x_{ik})
+$$
+
+```{python ice_gam, message = FALSE}
+
+```
+
+Unlike standard black-box models, MID's low-order structure allows us to compute these expectations efficiently and interpret the variation across curves (the "thickness" of the ICE plot) as a direct consequence of specified interaction terms $g_{jk}$.
+
+### Additive Attribution
+
+Third, we perform instance-level explanation through an Additive Breakdown of the prediction.
+For any single observation $\mathbf{x}$, the MID surrogate's prediction $g(\mathbf{x})$ is decomposed into the exact sum of its functional components:
+
+$$
+g(\mathbf{x}) = \underbrace{g_\emptyset}_{\text{Intercept}} + \underbrace{\sum_{j} g_j(x_j)}_{\text{Main Effects}} + \underbrace{\sum_{j < k} g_{jk}(x_j, x_k)}_{\text{Interactions}}
+$$
+
+```{python}
+```
+
+By visualizing these contributions in a waterfall plot, we can identify which specific risk factors or interaction effects drove the prediction for a particular instance, such as a high-risk policyholder.
+
+## The Black-Box: LightGBM
+
+While GAMs are transparent, GBMs such as **LightGBM** often yield superior predictive power by capturing high-order interactions.
+However, this accuracy comes at the cost of being a black box.
+
+```{python}
+# hold out validation dataset
+
+# create datasets for training
+
+# model parameters
 ```
 
 ```{python}
-import pandas as pd
-
-train = pd.read_parquet("../data/train.parquet")
-test  = pd.read_parquet("../data/test.parquet")
-
-print(train.head())
+# evaluate fitted model
 ```
+
+### Surrogate Modeling
+
+We use `{midr}` to replicate the LightGBM model.
+By including interaction terms in the model formula, we allow the surrogate to capture the joint relationships that the GBM has learned.
+The goal is to approximate the LightGBM function $f_{LGB}(\mathbf{x})$ with our interpretable structure $g(\mathbf{x})$:
+
+$$
+f_{LGB}(\mathbf{x}) \approx g(\mathbf{x}) = g_\emptyset + \sum_{j} g_j(x_j) + \sum_{j < k} g_{jk}(x_j, x_k)
+$$
+
+::: {.callout-warning}
+### Computational Considerations
+Including all second-order interactions using the `(...)^2` syntax results in $p(p-1)/2$ interaction terms.
+For high-dimensional data, this can be memory-intensive.
+Users should ensure sufficient RAM is available or consider limiting the formula to the most relevant features, or using a subset of the training set.
+:::
+
+```{python, eval=FALSE}
+```
+
+```{python, echo = FALSE}
+```
+
+```{python}
+# evaluate fitted surrogate
+```
+
+### Model Fidelity
+
+To measure how successfully our surrogate replicates the LightGBM model, we use the R-squared score on the link scale ($\log$ scale). 
+
+```{python}
+# calculate R-squared on testing dataset
+```
+
+### Feature Effects
+
+```{python}
+```
+
+A key advantage of `{midr}` is its ability to isolate interaction effects $g_{jk}$ from main effects $g_j$.
+This is particularly useful to understand the joint impact of two variables (e.g., `Region` and `LogDensity`).
+
+```{python}
+```
+
+```{python}
+```
+
+### Effect Importance
+
+To rank the influence of each component discovered in the LightGBM model, we calculate the Effect Importance, defined as the average absolute contribution.
+
+```{python, message = FALSE}
+```
+
+### Conditional Expectation
+
+We further explore the model's behavior using the ICE plot.
+In the MID framework, the variation in ICE curves for a feature $j$ is explicitly governed by the interaction terms $g_{jk}$ identified from the LightGBM model.
+
+```{python, message = FALSE}
+```
+
+### Additive Attribution
+
+Finally, we perform an Additive Breakdown for individual predictions.
+This provides an exact allocation of the LightGBM's prediction into the terms of our surrogate model.
+
+```{python}
+```
+
+## Conclusion
+
+In this notebook, we have demonstrated how **Maximum Interpretation Decomposition (MID)** bridges the gap between predictive performance and model transparency.
+By using the `{midr}` package, we successfully transformed a complex LightGBM model into a structured, additive representation.
+
+While the surrogate model fidelity may not always be perfect, the crucial advantage lies in our ability to quantify its limitations. 
+Through the **uninterpreted variation ratio**, we can directly assess the complexity of the black-box model.
+If the fidelity is lower than expected, it serves as a diagnostic signal that the original model relies on high-order interactions or structural complexities that extend beyond second-order effects.
+
+Knowing the extent of this "unexplained" variance is far more valuable than operating in the dark.
+It allows actuaries to make informed decisions about whether the additional complexity of a black-box model is justified by its performance, or if a more transparent structure is preferable for regulatory and risk management purposes.
+
+As machine learning models become increasingly prevalent in insurance pricing and reserving, tools like MID will be essential for ensuring that our "black-boxes" remain accountable, reliable, and fundamentally understood.

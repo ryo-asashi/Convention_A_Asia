@@ -57,7 +57,7 @@ library(midnight)
 library(ggplot2)
 library(gridExtra)
 
-# load training and testin datasets
+# load training and testing datasets
 train <- read_parquet("../data/train.parquet")
 test  <- read_parquet("../data/test.parquet")
 ```
@@ -222,7 +222,7 @@ $$
 $$
 
 ```{r imp_gam, message = FALSE}
-imp_gam <- mid.importance(mid_gam, data = train, max.nrow = 2000)
+imp_gam <- mid.importance(mid_gam, data = train, max.nsamples = 2000)
 grid.arrange(
   nrow = 1, widths = c(5, 4),
   ggmid(imp_gam, fill = "steelblue") +
@@ -455,7 +455,7 @@ cat(sprintf("R-squared: %.4f", R2_mid))
 
 ```{r}
 par.midr(mfrow = c(2, 4))
-mid.plots(mid_lgb, engine = "graphics", ylab = "Partial Effect")
+mid.plots(mid_lgb, engine = "graphics", ylab = "Main Effect")
 ```
 
 A key advantage of `{midr}` is its ability to isolate interaction effects $g_{jk}$ from main effects $g_j$.
@@ -487,7 +487,7 @@ persp(mid_lgb, "LogDensity:Region", theta = -45, phi = 40)
 To rank the influence of each component discovered in the LightGBM model, we calculate the Effect Importance, defined as the average absolute contribution.
 
 ```{r, message = FALSE}
-imp_lgb <- mid.importance(mid_lgb, data = train, max.nrow = 2000)
+imp_lgb <- mid.importance(mid_lgb, data = train, max.nsamples = 2000)
 grid.arrange(
   nrow = 1, widths = c(4, 3),
   ggmid(imp_lgb, theme = "bluescale@qual", max.nterms = 20) +

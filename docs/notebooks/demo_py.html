@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>Python Demo – Maximizing the Interpretation of Black-Box Models</title>
+<title>Surrogate Modeling with MID in Python – Maximizing the Interpretation of Black-Box Models</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -103,6 +103,35 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   }
 }</script>
 
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN") {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
 
 </head>
 
@@ -150,15 +179,44 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
 <!-- sidebar -->
 <!-- margin-sidebar -->
-    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar zindex-bottom">
-        
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#introduction" id="toc-introduction" class="nav-link active" data-scroll-target="#introduction">Introduction</a>
+  <ul class="collapse">
+  <li><a href="#what-is-mid" id="toc-what-is-mid" class="nav-link" data-scroll-target="#what-is-mid">What is MID?</a></li>
+  <li><a href="#setting-up" id="toc-setting-up" class="nav-link" data-scroll-target="#setting-up">Setting Up</a></li>
+  </ul></li>
+  <li><a href="#the-interpretable-baseline-gam" id="toc-the-interpretable-baseline-gam" class="nav-link" data-scroll-target="#the-interpretable-baseline-gam">The Interpretable Baseline: GAM</a>
+  <ul class="collapse">
+  <li><a href="#surrogate-modeling" id="toc-surrogate-modeling" class="nav-link" data-scroll-target="#surrogate-modeling">Surrogate Modeling</a></li>
+  <li><a href="#model-fidelity" id="toc-model-fidelity" class="nav-link" data-scroll-target="#model-fidelity">Model Fidelity</a></li>
+  <li><a href="#feature-effects" id="toc-feature-effects" class="nav-link" data-scroll-target="#feature-effects">Feature Effects</a></li>
+  <li><a href="#effect-importance" id="toc-effect-importance" class="nav-link" data-scroll-target="#effect-importance">Effect Importance</a></li>
+  <li><a href="#conditional-expectation" id="toc-conditional-expectation" class="nav-link" data-scroll-target="#conditional-expectation">Conditional Expectation</a></li>
+  <li><a href="#additive-attribution" id="toc-additive-attribution" class="nav-link" data-scroll-target="#additive-attribution">Additive Attribution</a></li>
+  </ul></li>
+  <li><a href="#the-black-box-lightgbm" id="toc-the-black-box-lightgbm" class="nav-link" data-scroll-target="#the-black-box-lightgbm">The Black-Box: LightGBM</a>
+  <ul class="collapse">
+  <li><a href="#surrogate-modeling-1" id="toc-surrogate-modeling-1" class="nav-link" data-scroll-target="#surrogate-modeling-1">Surrogate Modeling</a></li>
+  <li><a href="#model-fidelity-1" id="toc-model-fidelity-1" class="nav-link" data-scroll-target="#model-fidelity-1">Model Fidelity</a></li>
+  <li><a href="#feature-effects-1" id="toc-feature-effects-1" class="nav-link" data-scroll-target="#feature-effects-1">Feature Effects</a></li>
+  <li><a href="#effect-importance-1" id="toc-effect-importance-1" class="nav-link" data-scroll-target="#effect-importance-1">Effect Importance</a></li>
+  <li><a href="#conditional-expectation-1" id="toc-conditional-expectation-1" class="nav-link" data-scroll-target="#conditional-expectation-1">Conditional Expectation</a></li>
+  <li><a href="#additive-attribution-1" id="toc-additive-attribution-1" class="nav-link" data-scroll-target="#additive-attribution-1">Additive Attribution</a></li>
+  </ul></li>
+  <li><a href="#conclusion" id="toc-conclusion" class="nav-link" data-scroll-target="#conclusion">Conclusion</a></li>
+  </ul>
+</nav>
     </div>
 <!-- main -->
 <main class="content" id="quarto-document-content">
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title">Python Demo</h1>
+<h1 class="title">Surrogate Modeling with MID in Python</h1>
 </div>
 
 
@@ -175,45 +233,250 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </header>
 
 
-<div id="a2ff8ac5" class="cell" data-execution_count="1">
+<section id="introduction" class="level2">
+<h2 class="anchored" data-anchor-id="introduction">Introduction</h2>
+<p>In modern actuarial science, there is an inherent tension between predictive accuracy and model transparency. While ensemble tree-based models like <strong>Gradient Boosting Machines (GBMs)</strong> frequently outperform traditional <strong>Generalized Linear Models (GLMs)</strong>, their “black-box” nature presents significant hurdles for model governance, regulatory compliance, and price filing.</p>
+<p>This notebook demonstrates a solution using <strong>Maximum Interpretation Decomposition (MID)</strong> via the <code>{midlearn}</code> library in Python.</p>
+<div class="callout callout-style-default callout-warning callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Compatibility Notice
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>This article relies on features introduced in <strong>midr (&gt;= 0.5.2.906)</strong> and <strong>midlearn (&gt;= 0.1.3)</strong>. Please ensure your packages are up to date. Some visualization arguments are not available in earlier versions.</p>
+</div>
+</div>
+<section id="what-is-mid" class="level3">
+<h3 class="anchored" data-anchor-id="what-is-mid">What is MID?</h3>
+<p>MID is a functional decomposition framework that acts as a high-fidelity surrogate for complex models. It deconstructs a black-box prediction function <span class="math inline">\(f(\mathbf{X})\)</span> into several interpretable components: intercept <span class="math inline">\(g_\emptyset\)</span>, main effects <span class="math inline">\(g_j(X_j)\)</span>, and interaction effects <span class="math inline">\(g_{jk}(X_j, X_k)\)</span>. The prediction is represented as the following additive structure:</p>
+<p><span class="math display">\[
+f(\mathbf{X}) = g_\emptyset + \sum_{j} g_j(X_{j}) + \sum_{j &lt; k} g_{jk}(X_{j},\;X_{k}) + \dots + g_D(\mathbf{X})
+\]</span></p>
+<p>To ensure the uniqueness and interpretability of each component, MID imposes the centering constraints:</p>
+<p><span class="math display">\[
+\begin{aligned}
+\mathbf{E}\left[g_j(X_j)\right] &amp;= 0 \\
+\mathbf{E}\left[g_{jk}(X_j, X_k) \mid X_j = x_j\right] &amp;= 0 \quad (\forall x_j) \\
+\mathbf{E}\left[g_{jk}(X_j, X_k) \mid X_k = x_k\right] &amp;= 0 \quad (\forall x_k)
+\end{aligned}
+\]</span></p>
+<p>By replicating a black-box model with this structured approach, we can quantify the “uninterpreted” variance (captured by <span class="math inline">\(g_D(\mathbf{X})\)</span>) and derive a representation that captures the superior predictive power of machine learning without sacrificing actuarial clarity.</p>
+</section>
+<section id="setting-up" class="level3">
+<h3 class="anchored" data-anchor-id="setting-up">Setting Up</h3>
+<p>We begin by setting up the environment and loading the necessary libraries.</p>
+<div id="6cf9e78a" class="cell" data-execution_count="1">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> midlearn <span class="im">as</span> mid</span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> plotnine <span class="im">import</span> <span class="op">*</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># data manipulation</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="co"># predictive modeling</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="co"># import lightgbm as lgb</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="co"># surrogate modeling</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> midlearn <span class="im">as</span> mid</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="co"># visualization</span></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> plotnine <span class="im">import</span> <span class="op">*</span></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="co"># load training and testing datasets</span></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>train <span class="op">=</span> pd.read_parquet(<span class="st">"../data/train.parquet"</span>)</span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>test  <span class="op">=</span> pd.read_parquet(<span class="st">"../data/test.parquet"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-stderr">
 <pre><code>Error importing in API mode: ImportError('On Windows, cffi mode "ANY" is only "ABI".')
 Trying to import in ABI mode.</code></pre>
 </div>
 </div>
-<div id="dc0752f2" class="cell" data-execution_count="2">
+<div id="34102f44" class="cell" data-execution_count="2">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>train <span class="op">=</span> pd.read_parquet(<span class="st">"../data/train.parquet"</span>)</span>
-<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>test  <span class="op">=</span> pd.read_parquet(<span class="st">"../data/test.parquet"</span>)</span>
-<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(train.head())</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># configurations</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
-<div class="cell-output cell-output-stdout">
-<pre><code>   Frequency  Exposure  VehPower  VehAge  DrivAge VehBrand   VehGas  \
-0        0.0      1.00         6     9.0       43       B1   Diesel   
-1        0.0      0.18         4    16.0       30       B2  Regular   
-2        0.0      0.53         8     3.0       48      B12   Diesel   
-3        0.0      0.08         6    18.0       38    Other  Regular   
-4        0.0      1.00         7     5.0       69       B2  Regular   
-
-   LogDensity                       Region  
-0    9.138522                  Rhone-Alpes  
-1    9.138522                  Rhone-Alpes  
-2    6.336826  Provence-Alpes-Cotes-D'Azur  
-3    8.336151                  Rhone-Alpes  
-4    7.242082                        Other  </code></pre>
+</div>
+<p>A key component of our evaluation is the <strong>Weighted Mean Poisson Deviance</strong> defined as follows:</p>
+<p><span class="math display">\[
+L(\mathbf{y}, \hat{\mathbf{y}}, \mathbf{w}) = \frac{2 \sum_{i=1}^n w_i \left( y_i \log(y_i/\hat{y}_i) - (y_i - \hat{y}_i) \right)}{\sum_{i=1}^n w_i}
+\]</span></p>
+<div id="6033de50" class="cell" data-execution_count="3">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># define loss function</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
+</section>
+</section>
+<section id="the-interpretable-baseline-gam" class="level2">
+<h2 class="anchored" data-anchor-id="the-interpretable-baseline-gam">The Interpretable Baseline: GAM</h2>
+<p>We first fit a GAM to establish a transparent benchmark. Since GAMs are additive by design, they provide a “ground truth” model structure to be recovered by the functional decomposition.</p>
+<div id="6c1bb3f5" class="cell" data-execution_count="4">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># evaluate fitted model</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
+<section id="surrogate-modeling" class="level3">
+<h3 class="anchored" data-anchor-id="surrogate-modeling">Surrogate Modeling</h3>
+<p>We apply the <code>interpret()</code> function to the GAM. This step serves as a sanity check: if MID is effective, it should perfectly replicate the predictive behavior of the original GAM.</p>
+<div id="8ad3caa2" class="cell" data-execution_count="5">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co"># evaluate fitted surrogate</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
+</section>
+<section id="model-fidelity" class="level3">
+<h3 class="anchored" data-anchor-id="model-fidelity">Model Fidelity</h3>
+<p>To assess model <strong>fidelity</strong>, i.e., how closely the surrogate replicates the black-box, we calculate the <strong>uninterpreted variation ratio</strong> <span class="math inline">\(\mathbf{U}\)</span>.</p>
+<p><span class="math display">\[
+\mathbf{U}(f,g) = \frac{\sum_{i=1}^n (f(x_i) - g(x_i))^2}{\sum_{i=1}^n (f(x_i) - \bar{f})^2}, \quad \text{where } \bar{f} = \frac{1}{n}\sum_{i=1}^n f(x_i)
+\]</span></p>
+<p>This metric represents the proportion of the black-box model’s variance that is not captured by the additive components of the MID model. The <strong>R-squared score</strong>, <span class="math inline">\(\mathbf{python}^2(f,g) = 1 - \mathbf{U}(f,g)\)</span>, is a standard measure for this purpose. It is important to note that this <span class="math inline">\(\mathbf{python}^2\)</span> measures the fidelity to the black-box model, not the predictive accuracy relative to the ground truth observations.</p>
+<p>In the <code>{midr}</code> package, the summary output includes this ratio calculated on the training set. For models with non-linear links (e.g., Poisson regression), the “working” ratio is computed on the scale of the link function (e.g., <span class="math inline">\(\log\)</span> scale).</p>
+<p>To rigorously confirm the model fidelity, it is recommended to evaluate these metrics on a separate testing set. This ensures that the surrogate model is not just over-fitting the training predictions but has truly captured the underlying functional structure.</p>
+<div id="18d2a5e8" class="cell" data-execution_count="6">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co"># calculate R-squared on testing dataset</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
+<p>As shown by the high <span class="math inline">\(\mathbf{python}^2\)</span> score, the MID surrogate achieves near-perfect fidelity. This level of agreement justifies using the MID components (main effects and interactions) as a reliable lens through which to interpret the original black-box model’s behavior.</p>
+</section>
+<section id="feature-effects" class="level3">
+<h3 class="anchored" data-anchor-id="feature-effects">Feature Effects</h3>
+<p>Visualizing the functional behavior of each component allows for a direct comparison between the MID surrogate’s decomposition and the original GAM’s structure.</p>
+<ul>
+<li>MID Surrogate</li>
+</ul>
+<div id="90e85380" class="cell" data-execution_count="7">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="co"># main effects of MID surrogate</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
+<ul>
+<li>Original GAM</li>
+</ul>
+<div id="c2f44656" class="cell" data-execution_count="8">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="co"># feature effects of GAM</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
+<p>Furthermore, we can visualize the joint effects of feature pairs as 3D prediction surfaces using the S3 method for the <code>persp()</code> function.</p>
+</section>
+<section id="effect-importance" class="level3">
+<h3 class="anchored" data-anchor-id="effect-importance">Effect Importance</h3>
+<p>Beyond simple plots for feature effects, <code>{midr}</code> provides a suite of diagnostic tools. First, the <strong>Effect Importance</strong> of a term <span class="math inline">\(j\)</span> is defined as the mean absolute contribution of that term across the population:</p>
+<p><span class="math display">\[
+\text{Importance}_j = \mathbf{E} \left[ | g_j(X_j) | \right] \approx \frac{1}{n} \sum_{i=1}^n | g_j(x_{ij}) |
+\]</span></p>
+<p>For interaction terms, the importance is similarly calculated using <span class="math inline">\(g_{jk}(X_j, X_k)\)</span>. This metric allows us to rank features by their average influence on the model’s predictions.</p>
+</section>
+<section id="conditional-expectation" class="level3">
+<h3 class="anchored" data-anchor-id="conditional-expectation">Conditional Expectation</h3>
+<p>Second, we can explore <strong>Individual Conditional Expectations (ICE)</strong>. In the MID framework, the ICE for a feature <span class="math inline">\(j\)</span> and a specific observation <span class="math inline">\(i\)</span> is the expected value of the prediction as <span class="math inline">\(X_j\)</span> varies, while keeping other features fixed at their observed values <span class="math inline">\(\mathbf{x}_{\setminus j}^{(i)}\)</span>:</p>
+<p><span class="math display">\[
+\text{ICE}_j^{(i)}(x) = g_\emptyset + g_j(x) + \sum_{k \neq j} g_{jk}(x, x_{ik})
+\]</span></p>
+<p>Unlike standard black-box models, MID’s low-order structure allows us to compute these expectations efficiently and interpret the variation across curves (the “thickness” of the ICE plot) as a direct consequence of specified interaction terms <span class="math inline">\(g_{jk}\)</span>.</p>
+</section>
+<section id="additive-attribution" class="level3">
+<h3 class="anchored" data-anchor-id="additive-attribution">Additive Attribution</h3>
+<p>Third, we perform instance-level explanation through an Additive Breakdown of the prediction. For any single observation <span class="math inline">\(\mathbf{x}\)</span>, the MID surrogate’s prediction <span class="math inline">\(g(\mathbf{x})\)</span> is decomposed into the exact sum of its functional components:</p>
+<p><span class="math display">\[
+g(\mathbf{x}) = \underbrace{g_\emptyset}_{\text{Intercept}} + \underbrace{\sum_{j} g_j(x_j)}_{\text{Main Effects}} + \underbrace{\sum_{j &lt; k} g_{jk}(x_j, x_k)}_{\text{Interactions}}
+\]</span></p>
+<p>By visualizing these contributions in a waterfall plot, we can identify which specific risk factors or interaction effects drove the prediction for a particular instance, such as a high-risk policyholder.</p>
+</section>
+</section>
+<section id="the-black-box-lightgbm" class="level2">
+<h2 class="anchored" data-anchor-id="the-black-box-lightgbm">The Black-Box: LightGBM</h2>
+<p>While GAMs are transparent, GBMs such as <strong>LightGBM</strong> often yield superior predictive power by capturing high-order interactions. However, this accuracy comes at the cost of being a black box.</p>
+<div id="03e1dac7" class="cell" data-execution_count="9">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="co"># hold out validation dataset</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a><span class="co"># create datasets for training</span></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a><span class="co"># model parameters</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
+<div id="c581ed68" class="cell" data-execution_count="10">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="co"># evaluate fitted model</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
+<section id="surrogate-modeling-1" class="level3">
+<h3 class="anchored" data-anchor-id="surrogate-modeling-1">Surrogate Modeling</h3>
+<p>We use <code>{midr}</code> to replicate the LightGBM model. By including interaction terms in the model formula, we allow the surrogate to capture the joint relationships that the GBM has learned. The goal is to approximate the LightGBM function <span class="math inline">\(f_{LGB}(\mathbf{x})\)</span> with our interpretable structure <span class="math inline">\(g(\mathbf{x})\)</span>:</p>
+<p><span class="math display">\[
+f_{LGB}(\mathbf{x}) \approx g(\mathbf{x}) = g_\emptyset + \sum_{j} g_j(x_j) + \sum_{j &lt; k} g_{jk}(x_j, x_k)
+\]</span></p>
+<div class="callout callout-style-default callout-warning callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Computational Considerations
 </div>
 </div>
+<div class="callout-body-container callout-body">
+<p>Including all second-order interactions using the <code>(...)^2</code> syntax results in <span class="math inline">\(p(p-1)/2\)</span> interaction terms. For high-dimensional data, this can be memory-intensive. Users should ensure sufficient RAM is available or consider limiting the formula to the most relevant features, or using a subset of the training set.</p>
+</div>
+</div>
+<div id="5d0c9261" class="cell" data-execution_count="11">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="co"># evaluate fitted surrogate</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
+</section>
+<section id="model-fidelity-1" class="level3">
+<h3 class="anchored" data-anchor-id="model-fidelity-1">Model Fidelity</h3>
+<p>To measure how successfully our surrogate replicates the LightGBM model, we use the R-squared score on the link scale (<span class="math inline">\(\log\)</span> scale).</p>
+<div id="339ed928" class="cell" data-execution_count="12">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="co"># calculate R-squared on testing dataset</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
+</section>
+<section id="feature-effects-1" class="level3">
+<h3 class="anchored" data-anchor-id="feature-effects-1">Feature Effects</h3>
+<p>A key advantage of <code>{midr}</code> is its ability to isolate interaction effects <span class="math inline">\(g_{jk}\)</span> from main effects <span class="math inline">\(g_j\)</span>. This is particularly useful to understand the joint impact of two variables (e.g., <code>Region</code> and <code>LogDensity</code>).</p>
+</section>
+<section id="effect-importance-1" class="level3">
+<h3 class="anchored" data-anchor-id="effect-importance-1">Effect Importance</h3>
+<p>To rank the influence of each component discovered in the LightGBM model, we calculate the Effect Importance, defined as the average absolute contribution.</p>
+</section>
+<section id="conditional-expectation-1" class="level3">
+<h3 class="anchored" data-anchor-id="conditional-expectation-1">Conditional Expectation</h3>
+<p>We further explore the model’s behavior using the ICE plot. In the MID framework, the variation in ICE curves for a feature <span class="math inline">\(j\)</span> is explicitly governed by the interaction terms <span class="math inline">\(g_{jk}\)</span> identified from the LightGBM model.</p>
+</section>
+<section id="additive-attribution-1" class="level3">
+<h3 class="anchored" data-anchor-id="additive-attribution-1">Additive Attribution</h3>
+<p>Finally, we perform an Additive Breakdown for individual predictions. This provides an exact allocation of the LightGBM’s prediction into the terms of our surrogate model.</p>
+</section>
+</section>
+<section id="conclusion" class="level2">
+<h2 class="anchored" data-anchor-id="conclusion">Conclusion</h2>
+<p>In this notebook, we have demonstrated how <strong>Maximum Interpretation Decomposition (MID)</strong> bridges the gap between predictive performance and model transparency. By using the <code>{midr}</code> package, we successfully transformed a complex LightGBM model into a structured, additive representation.</p>
+<p>While the surrogate model fidelity may not always be perfect, the crucial advantage lies in our ability to quantify its limitations. Through the <strong>uninterpreted variation ratio</strong>, we can directly assess the complexity of the black-box model. If the fidelity is lower than expected, it serves as a diagnostic signal that the original model relies on high-order interactions or structural complexities that extend beyond second-order effects.</p>
+<p>Knowing the extent of this “unexplained” variance is far more valuable than operating in the dark. It allows actuaries to make informed decisions about whether the additional complexity of a black-box model is justified by its performance, or if a more transparent structure is preferable for regulatory and risk management purposes.</p>
+<p>As machine learning models become increasingly prevalent in insurance pricing and reserving, tools like MID will be essential for ensuring that our “black-boxes” remain accountable, reliable, and fundamentally understood.</p>
 
 
+</section>
 
 </main> <!-- /main -->
 <script id="quarto-html-after-body" type="application/javascript">
