@@ -11,7 +11,7 @@ This notebook demonstrates a solution using **Maximum Interpretation Decompositi
 
 ::: {.callout-warning}
 ## Compatibility Notice
-This article relies on features introduced in **midr (>= 0.5.2.906)** and **midlearn (>= 0.1.3)**. Please ensure your packages are up to date. Some visualization arguments are not available in earlier versions.
+This article relies on features introduced in **midlearn (>= 0.1.3)** and the underlying R package **midr (>= 0.5.3)**. Please ensure your library and package are up to date. Some arguments are not available in earlier versions.
 :::
 
 ### What is MID?
@@ -40,23 +40,25 @@ By replicating a black-box model with this structured approach, we can quantify 
 
 We begin by setting up the environment and loading the necessary libraries.
 
-```{python, message = FALSE, warnigs = FALSE}
-# data manipulation
+```{python}
+#| label: setup
+#| message: False
+#| warnigs: False
+# utility
 from pathlib import Path
+
+# data manipulation
 import numpy as np
 import pandas as pd
-import itertools
-
-# encoder
 from sklearn.compose import ColumnTransformer
 from sklearn.preprocessing import OneHotEncoder
 
 # predictive modeling
-from sklearn.linear_model import PoissonRegressor
+import sklearn.linear_model as lm
 import lightgbm as lgb
 
 # import loss function
-from sklearn.metrics import mean_poisson_deviance
+from sklearn.metrics import mean_poisson_deviance, r2_score
 
 # surrogate modeling
 import midlearn as mid
@@ -65,28 +67,38 @@ import midlearn as mid
 from plotnine import *
 
 # load training and testing datasets
-PATH = Path("C:/Users/daysb/Documents/RFiles/Convention_A_Asia/data")
+PATH = Path("../data")
 train = pd.read_parquet(PATH / "train.parquet")
 test  = pd.read_parquet(PATH / "test.parquet")
 ```
 
-```{python split_Xy, include = FALSE}
+```{python}
+#| label: configulations
+#| include: false
 # configurations
 COLD_RUN = False
 if COLD_RUN:
   np.random.seed(42)
-  train = train.sample(50000)
-  test  = test.sample(50000)
+  train = train.sample(5000)
+  test  = test.sample(5000)
+```
 
+In Python workflows, we typically partition the dataset into feature matrix $X$, target vector $y$, and weight vector $w$.
+
+```{python}
+#| label: split_Xy
+features = [
+  'VehPower', 'VehAge', 'DrivAge', 'LogDensity',
+  'VehBrand', 'VehGas', 'Region'
+]
 # training set
-train_X = train.drop(['Frequency', 'Exposure'], axis=1)
-train_y = train['Frequency']
-train_w = train['Exposure']
-
+X_train = train.drop(['Frequency', 'Exposure'], axis=1)
+y_train = train['Frequency']
+w_train = train['Exposure']
 # testing set
-test_X = test.drop(['Frequency', 'Exposure'], axis=1)
-test_y = test['Frequency']
-test_w = test['Exposure']
+X_test  = test.drop(['Frequency', 'Exposure'], axis=1)
+y_test  = test['Frequency']
+w_test  = test['Exposure']
 ```
 
 A key component of our evaluation is the **Weighted Mean Poisson Deviance** defined as follows:
@@ -95,68 +107,79 @@ $$
 L(\mathbf{y}, \hat{\mathbf{y}}, \mathbf{w}) = \frac{2 \sum_{i=1}^n w_i \left( y_i \log(y_i/\hat{y}_i) - (y_i - \hat{y}_i) \right)}{\sum_{i=1}^n w_i}
 $$
 
-## The Interpretable Baseline: GAM
+## The Interpretable Baseline: GLM
 
-We first fit a GAM to establish a transparent benchmark.
-Since GAMs are additive by design, they provide a "ground truth" model structure to be recovered by the functional decomposition.
+We first fit a GLM to establish a transparent benchmark.
+Since GLMs are strictly additive on the link scale, they provide a "ground truth" structure.
+This allows us to verify whether the MID framework can accurately recover the original coefficients and linear effects before moving to more complex black-box models.
 
-```{python fit_gam}
+```{python}
+#| label: fit_glm
+# define variable encoder for PoissonRegressor
 def one_hot_encode(X):
-    cats = X.select_dtypes(include=['object', 'category']).columns.tolist()
-    nums = X.select_dtypes(exclude=['object', 'category']).columns.tolist()
-    ct = ColumnTransformer(
-        transformers=[
-            ('cat', OneHotEncoder(drop='first', sparse_output=False), cats),
-            ('num', 'passthrough', nums)
-        ],
-        verbose_feature_names_out=False
-    )
-    ct.set_output(transform="pandas")
-    return ct.fit_transform(X)
+  cats = X.select_dtypes(include=['object', 'category']).columns.tolist()
+  nums = X.select_dtypes(exclude=['object', 'category']).columns.tolist()
+  ct = ColumnTransformer(
+    transformers=[
+      ('cat', OneHotEncoder(drop='first', sparse_output=False), cats),
+      ('num', 'passthrough', nums)
+    ],
+    verbose_feature_names_out=False
+  )
+  ct.set_output(transform="pandas")
+  return ct.fit_transform(X)
 
-# build poisson regressor
-fit_glm = PoissonRegressor(alpha=0, max_iter=300)
-fit_glm.fit(one_hot_encode(train_X), train_y, sample_weight=train_w)
+# initialize and train a Poisson GLM
+fit_glm = lm.PoissonRegressor(alpha=0, max_iter=300)
+fit_glm.fit(one_hot_encode(X_train), y_train, sample_weight=w_train)
 ```
 
-```{python pred_fit_gam}
+```{python}
+#| label: pred_fit_glm
 # evaluate fitted model
-pred_y = fit_glm.predict(one_hot_encode(test_X))
+y_pred_fit_glm = fit_glm.predict(one_hot_encode(X_test))
+
 deviance = mean_poisson_deviance(
-  y_true=test_y,
-  y_pred=pred_y,
-  sample_weight=test_w
+  y_true=y_test,
+  y_pred=y_pred_fit_glm,
+  sample_weight=w_test
 )
 print("Mean Poisson Deviance:", round(deviance, 6))
 ```
 
 ### Surrogate Modeling
 
-We apply the `interpret()` function to the GAM.
-This step serves as a sanity check: if MID is effective, it should perfectly replicate the predictive behavior of the original GAM.
+We apply the `interpret()` function to the GLM.
+This step serves as a sanity check: if MID is effective, it should perfectly replicate the predictive behavior of the original GLM.
 
-```{python mid_gam}
+```{python}
+#| label: mid_glm
+# build a surrogate model
 mid_glm = mid.MIDExplainer(
-  estimator = fit_glm,
-  link = "log"
+  estimator=fit_glm,
+  link="log"
 )
+
 mid_glm.fit(
-  train_X,
-  y = fit_glm.predict(one_hot_encode(train_X))
+  X_train,
+  y=fit_glm.predict(one_hot_encode(X_train))
 )
 ```
 
-```{python pred_mid_gam}
+```{python}
+#| label: pred_mid_glm
 # evaluate fitted surrogate
 print(
-    "Uninterpreted Variation Ratio:",
-    round(mid_glm.ratio['working'], 6)
+  "Uninterpreted Variation Ratio:",
+  round(mid_glm.ratio['working'], 6)
 )
-pred_y = mid_glm.predict(test_X)
+
+y_pred_mid_glm = mid_glm.predict(X_test)
+
 deviance = mean_poisson_deviance(
-  y_true=test_y,
-  y_pred=pred_y,
-  sample_weight=test_w
+  y_true=y_test,
+  y_pred=y_pred_mid_glm,
+  sample_weight=w_test
 )
 print("Mean Poisson Deviance:", round(deviance, 6))
 ```
@@ -179,11 +202,12 @@ To rigorously confirm the model fidelity, it is recommended to evaluate these me
 This ensures that the surrogate model is not just over-fitting the training predictions but has truly captured the underlying functional structure.
 
 ```{python}
+#| label: r2_mid_glm
 # calculate R-squared on testing dataset
-r2_mid = mid_glm.fidelity_score(
-    X=test_X,
-    y=fit_glm.predict(one_hot_encode(test_X)),
-    sample_weight=test_w
+r2_mid = r2_score(
+  y_true=np.log(fit_glm.predict(one_hot_encode(X_test))),
+  y_pred=np.log(mid_glm.predict(X_test)),
+  sample_weight=w_test
 )
 print("R squared:", round(r2_mid, 10))
 ```
@@ -193,36 +217,27 @@ This level of agreement justifies using the MID components (main effects and int
 
 ### Feature Effects
 
-Visualizing the functional behavior of each component allows for a direct comparison between the MID surrogate's decomposition and the original GAM's structure.
+While the coefficients of a GLM are directly interpretable, visualizing their functional behavior across the feature space provides a more intuitive grasp of the model’s structure.
+In the Python ecosystem, standard libraries for GLMs often lack built-in "term plots" (common in R) to visualize partial effects on the link scale.
 
-- MID Surrogate
+Here, the MID surrogate serves as a visualization tool: by appropriately replicating the `PoissonRegressor`, we can directly plot the main effects $g_j(X_j)$ to verify that the linear relationships on the log scale are correctly captured.
 
-```{python effects_mid_gam}
+```{python}
+#| label: effects_mid_glm
 # main effects of MID surrogate
 plots = []
-for feature in train_X.columns:
-    p = (
-        mid_glm.plot(feature) +
-        lims(y=[-0.8, 0.8]) +
-        labs(y="Main Effect")
-    )
-    plots.append(p)
+for feature in X_train.columns:
+  p = (
+  mid_glm.plot(feature) +
+    lims(y=[-0.8, 0.8]) +
+    labs(y="Main Effect")
+  )
+  plots.append(p)
 
 display(
-    (plots[0] | plots[1] | plots[2] | plots[5]) /
-    (plots[3] | plots[4] | plots[6])
+  (plots[0] | plots[1] | plots[2] | plots[5]) /
+  (plots[3] | plots[4] | plots[6])
 )
-```
-
-- Original GAM
-
-```{python effects_fit_gam}
-# feature effects of GAM
-```
-
-Furthermore, we can visualize the joint effects of feature pairs as 3D prediction surfaces using the S3 method for the `persp()` function.
-
-```{python persp_mid_gam}
 ```
 
 ### Effect Importance
@@ -234,18 +249,19 @@ $$
 \text{Importance}_j = \mathbf{E} \left[ | g_j(X_j) | \right] \approx \frac{1}{n} \sum_{i=1}^n | g_j(x_{ij}) |
 $$
 
-```{python imp_gam, message = FALSE}
-imp_glm = mid_glm.importance(max_nsamples = 2000)
+```{python}
+#| label: imp_glm
+#| message: False
+imp_glm = mid_glm.importance(max_nsamples=2000)
+
 p1 = (
-    imp_glm.plot(fill = "steelblue") +
-    labs(title = "Mean Absolute Effect",
-        subtitle = "Bar Plot")
+  imp_glm.plot(fill="steelblue") +
+  labs(title="Mean Absolute Effect", subtitle="Bar Plot")
 )
 p2 = (
-    imp_glm.plot(style = "sinaplot", theme = "mako@div") +
-    labs(subtitle = "Distribution of Effects") +
-    theme(legend_position = "none",
-          axis_text_y = element_blank())
+  imp_glm.plot(style="sinaplot", theme="mako@div") +
+  labs(subtitle="Distribution of Effects") +
+  theme(legend_position="none", axis_text_y=element_blank())
 )
 display(p1 | p2)
 ```
@@ -262,26 +278,29 @@ $$
 \text{ICE}_j^{(i)}(x) = g_\emptyset + g_j(x) + \sum_{k \neq j} g_{jk}(x, x_{ik})
 $$
 
-```{python ice_gam, message = FALSE}
+```{python}
+#| label: ice_glm
+#| message: False
 ice_glm_link = mid_glm.conditional(
-    type="link", variable="DrivAge", data=train_X.sample(200)
+  type="link", variable="DrivAge", data=X_train.sample(200)
 )
 ice_glm = mid_glm.conditional(
-    variable="DrivAge", data=train_X.sample(200)
+  variable="DrivAge", data=X_train.sample(200)
 )
+
 p1 = (
-    ice_glm_link.plot(var_color="LogDensity", theme="bluescale") +
-    theme(legend_position = "bottom") +
-    labs(y = "Linear Predictor",
-         title = "Conditional Expectation",
-         subtitle = "Change in linear predictor")
-    )
+  ice_glm_link.plot(var_color="LogDensity", theme="bluescale") +
+  theme(legend_position="bottom") +
+  labs(y="Linear Predictor",
+       title="Conditional Expectation",
+       subtitle="Change in linear predictor")
+  )
 p2 = (
-    ice_glm.plot(var_color="LogDensity", theme="bluescale") +
-    theme(legend_position = "bottom") +
-    labs(y = "Linear Predictor", title = "",
-         subtitle = "Change in original scale")
-    )
+  ice_glm.plot(var_color="LogDensity", theme="bluescale") +
+  theme(legend_position = "bottom") +
+  labs(y="Linear Predictor", title="",
+       subtitle="Change in original scale")
+  )
 display(p1 | p2)
 ```
 
@@ -297,24 +316,25 @@ g(\mathbf{x}) = \underbrace{g_\emptyset}_{\text{Intercept}} + \underbrace{\sum_{
 $$
 
 ```{python}
+#| label: bd_glm
+#| message: False
 np.random.seed(42)
-row_ids = sorted(
-  np.random.randint(1, train.shape[0], 4).tolist()
-)
+row_ids = sorted(np.random.randint(0, train.shape[0], 4).tolist())
+
 bd_plots = []
-for i in row_ids:
-    bd = mid_glm.breakdown(row = i - 1)
-    label = "Breakdown of Row " + str(i)
-    p = (
-        bd.plot(theme = "shap", format_args = {'digits': 2}) +
-        labs(x = "", subtitle = label) +
-        theme(legend_position = "none")
-    )
-    bd_plots.append(p)
+for idx in row_ids:
+  bd = mid_glm.breakdown(row=idx)
+  label = "Breakdown for Row " + str(idx)
+  p = (
+    bd.plot(theme="shap", format_args={'digits': 2}) +
+    labs(x="", subtitle=label) +
+    theme(legend_position="none")
+  )
+  bd_plots.append(p)
 
 display(
-    (bd_plots[0] | bd_plots[1]) /
-    (bd_plots[2] | bd_plots[3]) 
+  (bd_plots[0] | bd_plots[1]) /
+  (bd_plots[2] | bd_plots[3]) 
 )
 ```
 
@@ -322,56 +342,66 @@ By visualizing these contributions in a waterfall plot, we can identify which sp
 
 ## The Black-Box: LightGBM
 
-While GAMs are transparent, GBMs such as **LightGBM** often yield superior predictive power by capturing high-order interactions.
+While GLMs are transparent, GBMs such as **LightGBM** often yield superior predictive power by capturing high-order interactions.
 However, this accuracy comes at the cost of being a black box.
 
 ```{python}
-# handle categorical features for LightGBM
+#| label: fit_lgb
+# data preprocessing for LightGBM
 def str_to_cat(X):
-    cats = X.select_dtypes(include=['object', 'category']).columns.tolist()
-    X = X.copy()
-    X[cats] = X[cats].astype('category')
-    return X
+  cats = X.select_dtypes(include=['object', 'category']).columns.tolist()
+  X = X.copy()
+  X[cats] = X[cats].astype('category')
+  return X
 
 # model parameters (mirroring the R version)
 params_lgb = {
-    'objective': 'poisson',
-    'learning_rate': 0.03188,
-    'num_leaves': 30,
-    'n_estimators': 1000,
-    'importance_type': 'gain',
-    'random_state': 42,
-    'verbose': -1
+  'objective': "poisson",
+  'n_estimators': 551,
+  'learning_rate': 0.01672663973358928,
+  'num_leaves': 61,
+  'max_depth': 19,
+  'min_child_samples': 10,
+  'subsample': 0.8123000876841823,
+  'colsample_bytree': 0.6507848978461632,
+  'reg_alpha': 4.234603347091384,
+  'reg_lambda': 8.790496879009705e-07,
+  'random_state': 42,
+  'n_jobs': -1,
+  'verbosity': -1,
+  'importance_type': 'gain'
 }
 
+# split datasets for validation
+valid_n = int(X_train.shape[0] * 0.2)
+train_X, valid_X = X_train.iloc[valid_n:], X_train.iloc[:valid_n]
+train_y, valid_y = y_train[valid_n:], y_train[:valid_n]
+train_w, valid_w = w_train[valid_n:], w_train[:valid_n]
+
+# initialize and train a LightGBM
 fit_lgb = lgb.LGBMRegressor(**params_lgb)
 
-n_valid = int(train_X.shape[0] * 0.2)
-X_train = train_X.iloc[n_valid:]
-X_valid = train_X.iloc[:n_valid]
-y_train = train_y[n_valid:]
-y_valid = train_y[:n_valid]
-w_train = train_w[n_valid:]
-w_valid = train_w[:n_valid]
-# Fit model with early stopping
 fit_lgb.fit(
-    str_to_cat(X_train), y_train,
-    sample_weight=w_train,
-    eval_set=[(X_valid, y_valid)],
-    eval_sample_weight=[w_valid],
-    callbacks=[lgb.early_stopping(stopping_rounds=50)]
+  X=str_to_cat(train_X),
+  y=train_y,
+  sample_weight=train_w,
+  eval_set=[(valid_X, valid_y)],
+  eval_sample_weight=[valid_w],
+  callbacks=[lgb.early_stopping(stopping_rounds=50)]
 )
 ```
 
 ```{python}
+#| label: pred_fit_lgb
 # evaluate fitted model
-pred_fit_lgb = fit_lgb.predict(test_X)
+y_pred_fit_lgb = fit_lgb.predict(str_to_cat(X_test))
+
 deviance = mean_poisson_deviance(
-    y_true=test_y, 
-    y_pred=pred_fit_lgb, 
-    sample_weight=test_w
+  y_true=y_test,
+  y_pred=y_pred_fit_lgb,
+  sample_weight=w_test
 )
-print("Mean Poisson Deviance (LightGBM):", round(deviance, 6))
+print("Mean Poisson Deviance:", round(deviance, 6))
 ```
 
 ### Surrogate Modeling
@@ -392,34 +422,38 @@ Users should ensure sufficient RAM is available or consider limiting the formula
 :::
 
 ```{python}
-features = [
-  "VehPower", "VehAge", "DrivAge", "LogDensity", 
-  "VehBrand", "VehGas", "Region"
-]
-main_effects = features
-interactions = [
-  f"{a}:{b}" for a, b in itertools.combinations(features, 2)
-]
-
+#| label: mid_lgb
+# build a surrogate model
 mid_lgb = mid.MIDExplainer(
-    estimator=fit_lgb,
-    terms=main_effects + interactions,
-    link="log",
-    penalty = 0.01
+  estimator=fit_lgb,
+  interactions=True,
+  link="log",
+  penalty=0.01
 )
+
 mid_lgb.fit(
-    train_X, 
-    y=fit_lgb.predict(train_X),
-    sample_weight=train_w
+  X_train, 
+  y=fit_lgb.predict(X_train),
+  sample_weight=w_train
 )
 ```
 
 ```{python}
+#| label: pred_mid_lgb
 # evaluate fitted surrogate
 print(
-    "Uninterpreted Variation Ratio:",
-    round(mid_glm.ratio['working'], 6)
+  "Uninterpreted Variation Ratio:",
+  round(mid_lgb.ratio['working'], 6)
 )
+
+y_pred_mid_lgb = mid_lgb.predict(X_test)
+
+deviance = mean_poisson_deviance(
+  y_true=y_test,
+  y_pred=y_pred_mid_lgb,
+  sample_weight=w_test
+)
+print("Mean Poisson Deviance:", round(deviance, 6))
 ```
 
 ### Model Fidelity
@@ -427,31 +461,35 @@ print(
 To measure how successfully our surrogate replicates the LightGBM model, we use the R-squared score on the link scale ($\log$ scale). 
 
 ```{python}
+#| label: r2_mid_lgb
 # calculate R-squared on testing dataset
-r2_lgb = mid_lgb.fidelity_score(
-    X=test_X,
-    y=fit_lgb.predict(test_X),
-    sample_weight=test_w
+r2_mid = r2_score(
+  y_true=np.log(fit_lgb.predict(str_to_cat(X_test))),
+  y_pred=np.log(mid_lgb.predict(X_test)),
+  sample_weight=w_test
 )
-print(f"R-squared: {r2_lgb:.6f}")
+print("R squared:", round(r2_mid, 10))
 ```
 
 ### Feature Effects
 
 ```{python}
-# visualizing main effects
+#| label: effects_mid_lgb
+#| message: False
+#| warning: False
+# main effects of MID surrogate
 plots = []
-for feature in ['VehPower', 'VehAge', 'DrivAge', 'LogDensity', 'VehBrand', 'VehGas', 'Region']:
-    p = (
-        mid_lgb.plot(feature) + 
-        lims(y=[-0.8, 0.8]) +
-        labs(y="Main Effect")
-    )
-    plots.append(p)
+for feature in X_train.columns:
+  p = (
+  mid_lgb.plot(feature) +
+    lims(y=[-1.0, 1.0]) +
+    labs(y="Main Effect")
+  )
+  plots.append(p)
 
 display(
-    (plots[0] | plots[1] | plots[2] | plots[3]) /
-    (plots[4] | plots[5] | plots[6])
+  (plots[0] | plots[1] | plots[2] | plots[5]) /
+  (plots[3] | plots[4] | plots[6])
 )
 ```
 
@@ -459,17 +497,18 @@ A key advantage of `{midr}` is its ability to isolate interaction effects $g_{jk
 This is particularly useful to understand the joint impact of two variables (e.g., `Region` and `LogDensity`).
 
 ```{python}
-# Plot interaction vs total effect for a specific pair
+#| label: interaction
 p1 = (
-    mid_lgb.plot("LogDensity:Region", type="data") +
-    labs(subtitle="Interaction Effect") +
-    theme(legend_position = "bottom")
+  mid_lgb.plot("LogDensity:Region", style="data",
+               data=train.sample(2000), theme="bluescale") +
+  labs(subtitle="Interaction Effect", y="") +
+  theme(legend_position="bottom")
 )
 p2 = (
-    mid_lgb.plot("LogDensity:Region", main_effects=True) +
-    labs(subtitle="Total Effect") +
-    theme(axis_text_y=element_blank(),
-          legend_position = "bottom")
+  mid_lgb.plot("LogDensity:Region", main_effects=True) +
+  labs(subtitle="Total Effect", y="") +
+  theme(axis_text_y=element_blank(),
+        legend_position="bottom")
 )
 display(p1 | p2)
 ```
@@ -479,16 +518,19 @@ display(p1 | p2)
 To rank the influence of each component discovered in the LightGBM model, we calculate the Effect Importance, defined as the average absolute contribution.
 
 ```{python, message = FALSE}
+#| label: imp_lgb
+#| message: False
 imp_lgb = mid_lgb.importance(max_nsamples=2000)
 
 p1 = (
-    imp_lgb.plot(fill="steelblue", max_nterms=15) +
-    labs(title="Effect Importance", subtitle="Average absolute effect")
+  imp_lgb.plot(theme="bluescale@seq", max_nterms=20) +
+  labs(title="Effect Importance", subtitle="Average absolute effect") +
+  theme(legend_position="none")
 )
 p2 = (
-    imp_lgb.plot(style="sinaplot", theme="mako@div", max_nterms=15) +
-    labs(subtitle="Distribution of effects") +
-    theme(axis_text_y=element_blank())
+  imp_lgb.plot(style="sinaplot", theme="mako@div", max_nterms=20) +
+  labs(title="", subtitle="Distribution of effects") +
+  theme(axis_text_y=element_blank(), legend_position="none")
 )
 display(p1 | p2)
 ```
@@ -499,19 +541,28 @@ We further explore the model's behavior using the ICE plot.
 In the MID framework, the variation in ICE curves for a feature $j$ is explicitly governed by the interaction terms $g_{jk}$ identified from the LightGBM model.
 
 ```{python, message = FALSE}
-ice_lgb_link = mid_lgb.conditional(type="link", variable="DrivAge", data=train_X.sample(200))
-ice_lgb = mid_lgb.conditional(variable="DrivAge", data=train_X.sample(200))
+#| label: ice_lgb
+#| message: False
+ice_lgb_link = mid_lgb.conditional(
+  type="link", variable="DrivAge", data=X_train.sample(200)
+)
+ice_lgb = mid_lgb.conditional(
+  variable="DrivAge", data=X_train.sample(200)
+)
 
 p1 = (
-    ice_lgb_link.plot(var_color="LogDensity", theme="bluescale") +
-    theme(legend_position="bottom") +
-    labs(y="Linear Predictor", title="Conditional Expectation (Link)")
-)
+  ice_lgb_link.plot(var_color="LogDensity", theme="bluescale") +
+  theme(legend_position="bottom") +
+  labs(y="Linear Predictor",
+       title="Conditional Expectation",
+       subtitle="Change in linear predictor")
+  )
 p2 = (
-    ice_lgb.plot(var_color="LogDensity", theme="bluescale") +
-    theme(legend_position="bottom") +
-    labs(y="Prediction", title="Conditional Expectation (Response)")
-)
+  ice_lgb.plot(var_color="LogDensity", theme="bluescale") +
+  theme(legend_position = "bottom") +
+  labs(y = "Linear Predictor", title = "",
+     subtitle = "Change in original scale")
+  )
 display(p1 | p2)
 ```
 
@@ -521,31 +572,34 @@ Finally, we perform an Additive Breakdown for individual predictions.
 This provides an exact allocation of the LightGBM's prediction into the terms of our surrogate model.
 
 ```{python}
+#| label: bd_lgb
+#| message: False
 np.random.seed(42)
 row_ids = sorted(
-  np.random.randint(1, train.shape[0], 4).tolist()
+  np.random.randint(0, train.shape[0], 4).tolist()
 )
 bd_plots = []
-for i in row_ids:
-    bd = mid_lgb.breakdown(row = i - 1)
-    label = "Breakdown of Row " + str(i)
-    p = (
-        bd.plot(theme = "shap", format_args = {'digits': 2}) +
-        labs(x = "", subtitle = label) +
-        theme(legend_position = "none")
-    )
-    bd_plots.append(p)
+for idx in row_ids:
+  bd = mid_lgb.breakdown(row=idx)
+  label = "Breakdown for Row " + str(idx)
+  p = (
+    bd.plot(theme="shap", format_args={'digits': 4},
+            max_nterms=10) +
+    labs(x="", subtitle=label) +
+    theme(legend_position="none")
+  )
+  bd_plots.append(p)
 
 display(
-    (bd_plots[0] | bd_plots[1]) /
-    (bd_plots[2] | bd_plots[3]) 
+  (bd_plots[0] | bd_plots[1]) /
+  (bd_plots[2] | bd_plots[3]) 
 )
 ```
 
 ## Conclusion
 
 In this notebook, we have demonstrated how **Maximum Interpretation Decomposition (MID)** bridges the gap between predictive performance and model transparency.
-By using the `{midr}` package, we successfully transformed a complex LightGBM model into a structured, additive representation.
+By using the `{midlearn}` library, we successfully transformed a complex LightGBM model into a structured, additive representation.
 
 While the surrogate model fidelity may not always be perfect, the crucial advantage lies in our ability to quantify its limitations. 
 Through the **uninterpreted variation ratio**, we can directly assess the complexity of the black-box model.
