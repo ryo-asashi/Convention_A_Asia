@@ -79,18 +79,14 @@ test  = pd.read_parquet(PATH / "test.parquet")
 COLD_RUN = False
 if COLD_RUN:
   np.random.seed(42)
-  train = train.sample(5000)
-  test  = test.sample(5000)
+  train = train.sample(20000)
+  test  = test.sample(20000)
 ```
 
 In Python workflows, we typically partition the dataset into feature matrix $X$, target vector $y$, and weight vector $w$.
 
 ```{python}
 #| label: split_Xy
-features = [
-  'VehPower', 'VehAge', 'DrivAge', 'LogDensity',
-  'VehBrand', 'VehGas', 'Region'
-]
 # training set
 X_train = train.drop(['Frequency', 'Exposure'], axis=1)
 y_train = train['Frequency']
@@ -289,16 +285,17 @@ ice_glm = mid_glm.conditional(
 )
 
 p1 = (
-  ice_glm_link.plot(var_color="LogDensity", theme="bluescale") +
+  ice_glm_link.plot(theme="bluescale", var_color="LogDensity") +
   theme(legend_position="bottom") +
   labs(y="Linear Predictor",
        title="Conditional Expectation",
        subtitle="Change in linear predictor")
   )
 p2 = (
-  ice_glm.plot(var_color="LogDensity", theme="bluescale") +
+  ice_glm.plot(style="centered", theme="bluescale",
+               var_color="LogDensity") +
   theme(legend_position = "bottom") +
-  labs(y="Linear Predictor", title="",
+  labs(y="Prediction", title="",
        subtitle="Change in original scale")
   )
 display(p1 | p2)
@@ -523,7 +520,7 @@ To rank the influence of each component discovered in the LightGBM model, we cal
 imp_lgb = mid_lgb.importance(max_nsamples=2000)
 
 p1 = (
-  imp_lgb.plot(theme="bluescale@seq", max_nterms=20) +
+  imp_lgb.plot(theme="bluescale@qual", max_nterms=20) +
   labs(title="Effect Importance", subtitle="Average absolute effect") +
   theme(legend_position="none")
 )
@@ -551,16 +548,17 @@ ice_lgb = mid_lgb.conditional(
 )
 
 p1 = (
-  ice_lgb_link.plot(var_color="LogDensity", theme="bluescale") +
+  ice_lgb_link.plot(theme="bluescale", var_color="LogDensity") +
   theme(legend_position="bottom") +
   labs(y="Linear Predictor",
        title="Conditional Expectation",
        subtitle="Change in linear predictor")
   )
 p2 = (
-  ice_lgb.plot(var_color="LogDensity", theme="bluescale") +
+  ice_lgb.plot(style="centered", theme="bluescale",
+               var_color="LogDensity") +
   theme(legend_position = "bottom") +
-  labs(y = "Linear Predictor", title = "",
+  labs(y = "Prediction", title = "",
      subtitle = "Change in original scale")
   )
 display(p1 | p2)
