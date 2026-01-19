@@ -77,10 +77,13 @@ test  = pd.read_parquet(PATH / "test.parquet")
 #| include: false
 # configurations
 COLD_RUN = False
+LOAD_MID_LGB = True
+SAVE_MID_LGB = False
+
 if COLD_RUN:
   np.random.seed(42)
-  train = train.sample(20000)
-  test  = test.sample(20000)
+  train = train.sample(5000)
+  test  = test.sample(5000)
 ```
 
 In Python workflows, we typically partition the dataset into feature matrix $X$, target vector $y$, and weight vector $w$.
@@ -420,6 +423,7 @@ Users should ensure sufficient RAM is available or consider limiting the formula
 
 ```{python}
 #| label: mid_lgb
+#| eval: False
 # build a surrogate model
 mid_lgb = mid.MIDExplainer(
   estimator=fit_lgb,
@@ -433,6 +437,30 @@ mid_lgb.fit(
   y=fit_lgb.predict(X_train),
   sample_weight=w_train
 )
+```
+
+```{python}
+#| label: load_mid_lgb
+#| echo: False
+import os
+import joblib
+if LOAD_MID_LGB and os.path.exists("../data/mid_lgb.pkl"):
+  mid_lgb = joblib.load("../data/mid_lgb.pkl")
+else:
+  mid_lgb = mid.MIDExplainer(
+    estimator=fit_lgb,
+    interactions=True,
+    link="log",
+    penalty=0.01
+  )
+  mid_lgb.fit(
+    X_train, 
+    y=fit_lgb.predict(X_train),
+    sample_weight=w_train
+  )
+  if SAVE_MID_LGB:
+    joblib.dump(mid_lgb, "../data/mid_lgb.pkl")
+mid_lgb
 ```
 
 ```{python}

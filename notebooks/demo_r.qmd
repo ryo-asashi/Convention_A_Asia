@@ -11,7 +11,7 @@ This notebook demonstrates a solution using **Maximum Interpretation Decompositi
 
 ::: {.callout-warning}
 ## Compatibility Notice
-This article relies on features introduced in **midr (>= 0.5.2.906)** and **midnight (>= 0.1.0.909)**. Please ensure your packages are up to date. Some visualization arguments are not available in earlier versions.
+This article relies on features introduced in **midr (>= 0.5.3)** and **midnight (>= 0.1.1)**. Please ensure your packages are up to date. Some visualization arguments are not available in earlier versions.
 :::
 
 ### What is MID?
@@ -169,7 +169,7 @@ For models with non-linear links (e.g., Poisson regression), the "working" ratio
 To rigorously confirm the model fidelity, it is recommended to evaluate these metrics on a separate testing set.
 This ensures that the surrogate model is not just over-fitting the training predictions but has truly captured the underlying functional structure.
 
-```{r }
+```{r r2_mid_gam}
 # calculate R-squared on testing dataset
 R2_mid <- weighted.loss(
   x = log(pred_fit_gam),
@@ -276,7 +276,7 @@ $$
 g(\mathbf{x}) = \underbrace{g_\emptyset}_{\text{Intercept}} + \underbrace{\sum_{j} g_j(x_j)}_{\text{Main Effects}} + \underbrace{\sum_{j < k} g_{jk}(x_j, x_k)}_{\text{Interactions}}
 $$
 
-```{r}
+```{r bd_gam}
 set.seed(42)
 row_ids <- sort(sample(nrow(train), 4))
 bd_list <- lapply(
@@ -288,7 +288,7 @@ bd_list <- lapply(
 )
 bd_plots <- lapply(
   bd_list, function(x) {
-    label <- paste0("Breakdown of Row ", attr(x, "row_id"))
+    label <- paste0("Breakdown for Row ", attr(x, "row_id"))
     ggmid(x, theme = "shap", format.args = list(digits = 4)) +
       labs(x = NULL, subtitle = label) +
       theme(legend.position = "none")
@@ -304,7 +304,7 @@ By visualizing these contributions in a waterfall plot, we can identify which sp
 While GAMs are transparent, GBMs such as **LightGBM** often yield superior predictive power by capturing high-order interactions.
 However, this accuracy comes at the cost of being a black box.
 
-```{r}
+```{r fit_lgb}
 # hold out validation dataset
 valid_idx <- seq_len(floor(nrow(train) * 0.2))
 
@@ -350,7 +350,7 @@ fit_lgb <- lgb.train(
 summary(fit_lgb)
 ```
 
-```{r}
+```{r pred_fit_lgb}
 # evaluate fitted model
 pred_fit_lgb <- predict(
   fit_lgb, data.matrix(select(test, -Frequency, -Exposure))
@@ -381,7 +381,7 @@ For high-dimensional data, this can be memory-intensive.
 Users should ensure sufficient RAM is available or consider limiting the formula to the most relevant features, or using a subset of the training set.
 :::
 
-```{r, eval=FALSE}
+```{r mid_lgb, eval=FALSE}
 mid_lgb <- interpret(
   Frequency ~ (VehPower + VehAge + DrivAge + LogDensity +
                VehBrand + VehGas + Region)^2,
@@ -399,7 +399,7 @@ mid_lgb <- interpret(
 summary(mid_lgb)
 ```
 
-```{r, echo = FALSE}
+```{r load_mid_lgb, echo = FALSE}
 if (LOAD_MID_LGB) {
   mid_lgb <- qs::qread("../data/mid_lgb.qs")
 } else {
@@ -423,7 +423,7 @@ if (SAVE_MID_LGB) {
 summary(mid_lgb)
 ```
 
-```{r}
+```{r pred_mid_lgb}
 # evaluate fitted surrogate
 pred_mid_lgb = predict(mid_lgb, test, type = "response")
 
@@ -439,7 +439,7 @@ cat("Mean Poisson Deviance:", deviance)
 
 To measure how successfully our surrogate replicates the LightGBM model, we use the R-squared score on the link scale ($\log$ scale). 
 
-```{r}
+```{r r2_mid_lgb}
 # calculate R-squared on testing dataset
 R2_mid <- weighted.loss(
   x = log(pred_fit_lgb),
@@ -453,7 +453,7 @@ cat(sprintf("R-squared: %.4f", R2_mid))
 
 ### Feature Effects
 
-```{r}
+```{r effects_mid_lgb}
 par.midr(mfrow = c(2, 4))
 mid.plots(mid_lgb, engine = "graphics", ylab = "Main Effect")
 ```
@@ -461,7 +461,7 @@ mid.plots(mid_lgb, engine = "graphics", ylab = "Main Effect")
 A key advantage of `{midr}` is its ability to isolate interaction effects $g_{jk}$ from main effects $g_j$.
 This is particularly useful to understand the joint impact of two variables (e.g., `Region` and `LogDensity`).
 
-```{r}
+```{r interaction}
 grid.arrange(
   nrow = 1, widths = c(3, 2),
   ggmid(mid_lgb, "LogDensity:Region", type = "data",
@@ -475,7 +475,7 @@ grid.arrange(
 )
 ```
 
-```{r}
+```{r persp_mid_lgb}
 par.midr(mar = c(1, 0, 1, 0), mfrow = c(1, 2))
 persp(mid_lgb, "DrivAge:LogDensity", theta = 45, phi = 40)
 persp(mid_lgb, "LogDensity:Region", theta = -45, phi = 40)
@@ -486,7 +486,7 @@ persp(mid_lgb, "LogDensity:Region", theta = -45, phi = 40)
 
 To rank the influence of each component discovered in the LightGBM model, we calculate the Effect Importance, defined as the average absolute contribution.
 
-```{r, message = FALSE}
+```{r imp_lgb, message = FALSE}
 imp_lgb <- mid.importance(mid_lgb, data = train, max.nsamples = 2000)
 grid.arrange(
   nrow = 1, widths = c(4, 3),
@@ -507,7 +507,7 @@ grid.arrange(
 We further explore the model's behavior using the ICE plot.
 In the MID framework, the variation in ICE curves for a feature $j$ is explicitly governed by the interaction terms $g_{jk}$ identified from the LightGBM model.
 
-```{r, message = FALSE}
+```{r ice_lgb, message = FALSE}
 ice_lgb_link <- mid.conditional(mid_lgb, type = "link", variable = "DrivAge")
 ice_lgb <- mid.conditional(mid_lgb, variable = "DrivAge")
 grid.arrange(
@@ -529,22 +529,16 @@ grid.arrange(
 Finally, we perform an Additive Breakdown for individual predictions.
 This provides an exact allocation of the LightGBM's prediction into the terms of our surrogate model.
 
-```{r}
+```{r bd_lgb}
 set.seed(42)
 row_ids <- sort(sample(nrow(train), 4))
 
-bd_list <- lapply(
-  row_ids,
-  function(x) {
-    res <- mid.breakdown(mid_lgb, train, row = x)
-    structure(res, row_id = x)
-  }
-)
-
 bd_plots <- lapply(
-  bd_list, function(x) {
-    label <- paste0("Breakdown of Row ", attr(x, "row_id"))
-    ggmid(x, theme = "shap", max.nterms = 10,
+  row_ids,
+  function(idx) {
+    res <- mid.breakdown(mid_lgb, train, row = idx)
+    label <- paste0("Breakdown for Row ", idx)
+    ggmid(res, theme = "shap", max.nterms = 10,
           format.args = list(digits = 4)) +
       labs(x = "Linear Predictor", subtitle = label) +
       theme(legend.position = "none")
