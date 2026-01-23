@@ -252,9 +252,9 @@ Compatibility Notice
 </div>
 <section id="what-is-mid" class="level3">
 <h3 class="anchored" data-anchor-id="what-is-mid">What is MID?</h3>
-<p>MID is a functional decomposition framework that acts as a high-fidelity surrogate for complex models. It deconstructs a black-box prediction function <span class="math inline">\(f(\mathbf{X})\)</span> into several interpretable components: intercept <span class="math inline">\(g_\emptyset\)</span>, main effects <span class="math inline">\(g_j(X_j)\)</span>, and interaction effects <span class="math inline">\(g_{jk}(X_j, X_k)\)</span>. The prediction is represented as the following additive structure:</p>
+<p>MID is a functional decomposition framework that acts as a high-fidelity surrogate for complex models. It deconstructs a black-box prediction function <span class="math inline">\(f(\mathbf{X})\)</span> into several interpretable components: intercept <span class="math inline">\(g_\emptyset\)</span>, main effects <span class="math inline">\(g_j(X_j)\)</span>, and interactions <span class="math inline">\(g_{jk}(X_j, X_k)\)</span>, minimizing the squared residuals <span class="math inline">\(\mathbf{E}\left[g_D(\mathbf{X})^2\right]\)</span>:</p>
 <p><span class="math display">\[
-f(\mathbf{X}) = g_\emptyset + \sum_{j} g_j(X_{j}) + \sum_{j &lt; k} g_{jk}(X_{j},\;X_{k}) + \dots + g_D(\mathbf{X})
+f(\mathbf{X}) = g_\emptyset + \sum_{j} g_j(X_{j}) + \sum_{j &lt; k} g_{jk}(X_{j},\;X_{k}) + g_D(\mathbf{X})
 \]</span></p>
 <p>To ensure the uniqueness and interpretability of each component, MID imposes the centering constraints:</p>
 <p><span class="math display">\[
@@ -295,7 +295,9 @@ f(\mathbf{X}) = g_\emptyset + \sum_{j} g_j(X_{j}) + \sum_{j &lt; k} g_{jk}(X_{j}
 </div>
 <p>A key component of our evaluation is the <strong>Weighted Mean Poisson Deviance</strong> defined as follows:</p>
 <p><span class="math display">\[
-L(\mathbf{y}, \hat{\mathbf{y}}, \mathbf{w}) = \frac{2 \sum_{i=1}^n w_i \left( y_i \log(y_i/\hat{y}_i) - (y_i - \hat{y}_i) \right)}{\sum_{i=1}^n w_i}
+\text{Loss}(\mathbf{y}, \hat{\mathbf{y}}, \mathbf{w}) =
+\frac{\sum_{i=1}^n w_i\;d(y_i,\hat{y}_i)}{\sum_{i=1}^n w_i},\quad
+d(y_i,\hat{y}_i) = 2\left[y_i (\log y_i - \log \hat{y}_i) - (y_i - \hat{y}_i)\right]
 \]</span></p>
 <div class="cell">
 <details class="code-fold">
@@ -392,7 +394,8 @@ Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</code></pre>
 </div>
 <section id="surrogate-modeling" class="level3">
 <h3 class="anchored" data-anchor-id="surrogate-modeling">Surrogate Modeling</h3>
-<p>We apply the <code>interpret()</code> function to the GAM. This step serves as a sanity check: if MID is effective, it should perfectly replicate the predictive behavior of the original GAM.</p>
+<p>A surrogate model is an interpretable model trained to approximate the predictions of a black-box model <span class="math inline">\(f(\mathbf{X})\)</span>.</p>
+<p>We apply the <code>interpret()</code> function to the GAM to construct a first-order MID model—the sum of the intercept and main effects—as an interpretable surrogate of the original model.</p>
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
@@ -459,7 +462,7 @@ Region       factor(7)</code></pre>
 <p><span class="math display">\[
 \mathbf{U}(f,g) = \frac{\sum_{i=1}^n (f(x_i) - g(x_i))^2}{\sum_{i=1}^n (f(x_i) - \bar{f})^2}, \quad \text{where } \bar{f} = \frac{1}{n}\sum_{i=1}^n f(x_i)
 \]</span></p>
-<p>This metric represents the proportion of the black-box model’s variance that is not captured by the additive components of the MID model. The <strong>R-squared score</strong>, <span class="math inline">\(\mathbf{R}^2(f,g) = 1 - \mathbf{U}(f,g)\)</span>, is a standard measure for this purpose. It is important to note that this <span class="math inline">\(\mathbf{R}^2\)</span> measures the fidelity to the black-box model, not the predictive accuracy relative to the ground truth observations.</p>
+<p>This metric represents the proportion of the black-box model’s variance that is not captured by the additive components of the MID model. The <strong>R-squared score</strong>, <span class="math inline">\(\mathbf{R}^2(f,g) = 1 - \mathbf{U}(f,g)\)</span>, is a standard measure for this purpose. However, it is important to note that this <span class="math inline">\(\mathbf{R}^2\)</span> measures the fidelity to the black-box model <span class="math inline">\(f\)</span>, rather than the predictive accuracy relative to the ground truth observations as is typically the case with standard <strong>R-squared</strong>.</p>
 <p>In the <code>{midr}</code> package, the summary output includes this ratio calculated on the training set. For models with non-linear links (e.g., Poisson regression), the “working” ratio is computed on the scale of the link function (e.g., <span class="math inline">\(\log\)</span> scale).</p>
 <p>To rigorously confirm the model fidelity, it is recommended to evaluate these metrics on a separate testing set. This ensures that the surrogate model is not just over-fitting the training predictions but has truly captured the underlying functional structure.</p>
 <div class="cell">

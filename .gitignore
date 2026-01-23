@@ -6,4 +6,5 @@
 /.quarto/
 /data/*.qs
 /data/*.pkl
+/powerpoint/
 /notebooks/*.ipynb

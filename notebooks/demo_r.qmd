@@ -17,11 +17,10 @@ This article relies on features introduced in **midr (>= 0.5.3)** and **midnight
 ### What is MID?
 
 MID is a functional decomposition framework that acts as a high-fidelity surrogate for complex models.
-It deconstructs a black-box prediction function $f(\mathbf{X})$ into several interpretable components: intercept $g_\emptyset$, main effects $g_j(X_j)$, and interaction effects $g_{jk}(X_j, X_k)$.
-The prediction is represented as the following additive structure:
+It deconstructs a black-box prediction function $f(\mathbf{X})$ into several interpretable components: intercept $g_\emptyset$, main effects $g_j(X_j)$, and interactions $g_{jk}(X_j, X_k)$, minimizing the squared residuals $\mathbf{E}\left[g_D(\mathbf{X})^2\right]$:
 
 $$
-f(\mathbf{X}) = g_\emptyset + \sum_{j} g_j(X_{j}) + \sum_{j < k} g_{jk}(X_{j},\;X_{k}) + \dots + g_D(\mathbf{X})
+f(\mathbf{X}) = g_\emptyset + \sum_{j} g_j(X_{j}) + \sum_{j < k} g_{jk}(X_{j},\;X_{k}) + g_D(\mathbf{X})
 $$
 
 To ensure the uniqueness and interpretability of each component, MID imposes the centering constraints:
@@ -78,7 +77,9 @@ if (COLD_RUN) {
 A key component of our evaluation is the **Weighted Mean Poisson Deviance** defined as follows:
 
 $$
-L(\mathbf{y}, \hat{\mathbf{y}}, \mathbf{w}) = \frac{2 \sum_{i=1}^n w_i \left( y_i \log(y_i/\hat{y}_i) - (y_i - \hat{y}_i) \right)}{\sum_{i=1}^n w_i}
+\text{Loss}(\mathbf{y}, \hat{\mathbf{y}}, \mathbf{w}) =
+\frac{\sum_{i=1}^n w_i\;d(y_i,\hat{y}_i)}{\sum_{i=1}^n w_i},\quad
+d(y_i,\hat{y}_i) = 2\left[y_i (\log y_i - \log \hat{y}_i) - (y_i - \hat{y}_i)\right]
 $$
 
 ```{r poisson_deviance}
@@ -124,8 +125,9 @@ cat("Mean Poisson Deviance:", deviance)
 
 ### Surrogate Modeling
 
-We apply the `interpret()` function to the GAM.
-This step serves as a sanity check: if MID is effective, it should perfectly replicate the predictive behavior of the original GAM.
+A surrogate model is an interpretable model trained to approximate the predictions of a black-box model $f(\mathbf{X})$.
+
+We apply the `interpret()` function to the GAM to construct a first-order MID model—the sum of the intercept and main effects—as an interpretable surrogate of the original model.
 
 ```{r mid_gam}
 mid_gam <- interpret(
@@ -161,7 +163,7 @@ $$
 $$
 
 This metric represents the proportion of the black-box model's variance that is not captured by the additive components of the MID model.
-The **R-squared score**, $\mathbf{R}^2(f,g) = 1 - \mathbf{U}(f,g)$, is a standard measure for this purpose. It is important to note that this $\mathbf{R}^2$ measures the fidelity to the black-box model, not the predictive accuracy relative to the ground truth observations.
+The **R-squared score**, $\mathbf{R}^2(f,g) = 1 - \mathbf{U}(f,g)$, is a standard measure for this purpose. However, it is important to note that this $\mathbf{R}^2$ measures the fidelity to the black-box model $f$, rather than the predictive accuracy relative to the ground truth observations as is typically the case with standard **R-squared**.
 
 In the `{midr}` package, the summary output includes this ratio calculated on the training set.
 For models with non-linear links (e.g., Poisson regression), the "working" ratio is computed on the scale of the link function (e.g., $\log$ scale).
