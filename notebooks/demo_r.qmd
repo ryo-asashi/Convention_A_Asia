@@ -16,24 +16,16 @@ This article relies on features introduced in **midr (>= 0.5.3)** and **midnight
 
 ### What is MID?
 
-MID is a functional decomposition framework that acts as a high-fidelity surrogate for complex models.
-It deconstructs a black-box prediction function $f(\mathbf{X})$ into several interpretable components: intercept $g_\emptyset$, main effects $g_j(X_j)$, and interactions $g_{jk}(X_j, X_k)$, minimizing the squared residuals $\mathbf{E}\left[g_D(\mathbf{X})^2\right]$:
+MID is a functional decomposition method that deconstructs a black-box prediction function $f(\mathbf{X})$ into several interpretable components: an intercept $g_\emptyset$, main effects $g_j(X_j)$, and second-order interactions $g_{jk}(X_j, X_k)$, minimizing the squared residuals $\mathbf{E}\left[g_D(\mathbf{X})^2\right]$:
 
 $$
 f(\mathbf{X}) = g_\emptyset + \sum_{j} g_j(X_{j}) + \sum_{j < k} g_{jk}(X_{j},\;X_{k}) + g_D(\mathbf{X})
 $$
 
-To ensure the uniqueness and interpretability of each component, MID imposes the centering constraints:
+To ensure the uniqueness and identifiability of each component, MID imposes centering and probability-weighted minimum-norm constraints on the decomposition.
 
-$$
-\begin{aligned}
-\mathbf{E}\left[g_j(X_j)\right] &= 0 \\
-\mathbf{E}\left[g_{jk}(X_j, X_k) \mid X_j = x_j\right] &= 0 \quad (\forall x_j) \\
-\mathbf{E}\left[g_{jk}(X_j, X_k) \mid X_k = x_k\right] &= 0 \quad (\forall x_k)
-\end{aligned}
-$$
-
-By replicating a black-box model with this structured approach, we can quantify the "uninterpreted" variance (captured by $g_D(\mathbf{X})$) and derive a representation that captures the superior predictive power of machine learning without sacrificing actuarial clarity.
+By approximating a black-box model with this surrogate structure, we can derive a representation that retains the superior predictive power of machine learning models without sacrificing actuarial transparency.
+Furthermore, it allows us to quantify the "uninterpreted" variance, i.e., the portion of the model's logic that can't be captured by low-order effects, via the residual term $g_D(\mathbf{X})$.
 
 ### Setting Up
 
@@ -125,9 +117,9 @@ cat("Mean Poisson Deviance:", deviance)
 
 ### Surrogate Modeling
 
-A surrogate model is an interpretable model trained to approximate the predictions of a black-box model $f(\mathbf{X})$.
+A **surrogate model** is an interpretable model trained to approximate the predictions of a black-box model $f(\mathbf{X})$.
 
-We apply the `interpret()` function to the GAM to construct a first-order MID model—the sum of the intercept and main effects—as an interpretable surrogate of the original model.
+We apply the `interpret()` function to the GAM to construct a first-order MID model as an interpretable surrogate of the original model.
 
 ```{r mid_gam}
 mid_gam <- interpret(
@@ -244,10 +236,10 @@ This metric allows us to rank features by their average influence on the model's
 ### Conditional Expectation
 
 Second, we can explore **Individual Conditional Expectations (ICE)**.
-In the MID framework, the ICE for a feature $j$ and a specific observation $i$ is the expected value of the prediction as $X_j$ varies, while keeping other features fixed at their observed values $\mathbf{x}_{\setminus j}^{(i)}$:
+In the MID framework, the ICE for a feature $j$ and a specific observation $i$ is the expected value of the prediction as $X_j$ varies, while keeping other features fixed at their observed values $\mathbf{x}_{i,\setminus j}$:
 
 $$
-\text{ICE}_j^{(i)}(x) = g_\emptyset + g_j(x) + \sum_{k \neq j} g_{jk}(x, x_{ik})
+\text{ICE}_{i, j}(x) = g_\emptyset + g_j(x) + \sum_{k \neq j} g_{jk}(x, x_{ik})
 $$
 
 ```{r ice_gam, message = FALSE}

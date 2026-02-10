@@ -252,19 +252,12 @@ Compatibility Notice
 </div>
 <section id="what-is-mid" class="level3">
 <h3 class="anchored" data-anchor-id="what-is-mid">What is MID?</h3>
-<p>MID is a functional decomposition framework that acts as a high-fidelity surrogate for complex models. It deconstructs a black-box prediction function <span class="math inline">\(f(\mathbf{X})\)</span> into several interpretable components: intercept <span class="math inline">\(g_\emptyset\)</span>, main effects <span class="math inline">\(g_j(X_j)\)</span>, and interactions <span class="math inline">\(g_{jk}(X_j, X_k)\)</span>, minimizing the squared residuals <span class="math inline">\(\mathbf{E}\left[g_D(\mathbf{X})^2\right]\)</span>:</p>
+<p>MID is a functional decomposition method that deconstructs a black-box prediction function <span class="math inline">\(f(\mathbf{X})\)</span> into several interpretable components: an intercept <span class="math inline">\(g_\emptyset\)</span>, main effects <span class="math inline">\(g_j(X_j)\)</span>, and second-order interactions <span class="math inline">\(g_{jk}(X_j, X_k)\)</span>, minimizing the squared residuals <span class="math inline">\(\mathbf{E}\left[g_D(\mathbf{X})^2\right]\)</span>:</p>
 <p><span class="math display">\[
 f(\mathbf{X}) = g_\emptyset + \sum_{j} g_j(X_{j}) + \sum_{j &lt; k} g_{jk}(X_{j},\;X_{k}) + g_D(\mathbf{X})
 \]</span></p>
-<p>To ensure the uniqueness and interpretability of each component, MID imposes the centering constraints:</p>
-<p><span class="math display">\[
-\begin{aligned}
-\mathbf{E}\left[g_j(X_j)\right] &amp;= 0 \\
-\mathbf{E}\left[g_{jk}(X_j, X_k) \mid X_j = x_j\right] &amp;= 0 \quad (\forall x_j) \\
-\mathbf{E}\left[g_{jk}(X_j, X_k) \mid X_k = x_k\right] &amp;= 0 \quad (\forall x_k)
-\end{aligned}
-\]</span></p>
-<p>By replicating a black-box model with this structured approach, we can quantify the “uninterpreted” variance (captured by <span class="math inline">\(g_D(\mathbf{X})\)</span>) and derive a representation that captures the superior predictive power of machine learning without sacrificing actuarial clarity.</p>
+<p>To ensure the uniqueness and identifiability of each component, MID imposes centering and probability-weighted minimum-norm constraints on the decomposition.</p>
+<p>By approximating a black-box model with this surrogate structure, we can derive a representation that retains the superior predictive power of machine learning models without sacrificing actuarial transparency. Furthermore, it allows us to quantify the “uninterpreted” variance, i.e., the portion of the model’s logic that can’t be captured by low-order effects, via the residual term <span class="math inline">\(g_D(\mathbf{X})\)</span>.</p>
 </section>
 <section id="setting-up" class="level3">
 <h3 class="anchored" data-anchor-id="setting-up">Setting Up</h3>
@@ -394,8 +387,8 @@ Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</code></pre>
 </div>
 <section id="surrogate-modeling" class="level3">
 <h3 class="anchored" data-anchor-id="surrogate-modeling">Surrogate Modeling</h3>
-<p>A surrogate model is an interpretable model trained to approximate the predictions of a black-box model <span class="math inline">\(f(\mathbf{X})\)</span>.</p>
-<p>We apply the <code>interpret()</code> function to the GAM to construct a first-order MID model—the sum of the intercept and main effects—as an interpretable surrogate of the original model.</p>
+<p>A <strong>surrogate model</strong> is an interpretable model trained to approximate the predictions of a black-box model <span class="math inline">\(f(\mathbf{X})\)</span>.</p>
+<p>We apply the <code>interpret()</code> function to the GAM to construct a first-order MID model as an interpretable surrogate of the original model.</p>
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
@@ -421,11 +414,11 @@ Link: log
 
 Uninterpreted Variation Ratio:
    working   response 
-3.7577e-05 2.5365e-05 
+3.7625e-05 2.5412e-05 
 
 Working Residuals:
         Min          1Q      Median          3Q         Max 
--0.01324336 -0.00069460 -0.00004683  0.00057250  0.01822450 
+-0.01317382 -0.00069381 -0.00004593  0.00057309  0.01821350 
 
 Encoding:
            main.effect
@@ -574,9 +567,9 @@ Region       factor(7)</code></pre>
 </section>
 <section id="conditional-expectation" class="level3">
 <h3 class="anchored" data-anchor-id="conditional-expectation">Conditional Expectation</h3>
-<p>Second, we can explore <strong>Individual Conditional Expectations (ICE)</strong>. In the MID framework, the ICE for a feature <span class="math inline">\(j\)</span> and a specific observation <span class="math inline">\(i\)</span> is the expected value of the prediction as <span class="math inline">\(X_j\)</span> varies, while keeping other features fixed at their observed values <span class="math inline">\(\mathbf{x}_{\setminus j}^{(i)}\)</span>:</p>
+<p>Second, we can explore <strong>Individual Conditional Expectations (ICE)</strong>. In the MID framework, the ICE for a feature <span class="math inline">\(j\)</span> and a specific observation <span class="math inline">\(i\)</span> is the expected value of the prediction as <span class="math inline">\(X_j\)</span> varies, while keeping other features fixed at their observed values <span class="math inline">\(\mathbf{x}_{i,\setminus j}\)</span>:</p>
 <p><span class="math display">\[
-\text{ICE}_j^{(i)}(x) = g_\emptyset + g_j(x) + \sum_{k \neq j} g_{jk}(x, x_{ik})
+\text{ICE}_{i, j}(x) = g_\emptyset + g_j(x) + \sum_{k \neq j} g_{jk}(x, x_{ik})
 \]</span></p>
 <div class="cell">
 <details class="code-fold">
@@ -774,11 +767,11 @@ Link: log
 
 Uninterpreted Variation Ratio:
  working response 
-0.071642 0.181512 
+0.071637 0.181511 
 
 Working Residuals:
      Min       1Q   Median       3Q      Max 
--0.51124 -0.04431 -0.00326  0.03899  3.63211 
+-0.51148 -0.04432 -0.00327  0.03899  3.63211 
 
 Encoding:
            main.effect interaction
@@ -805,7 +798,7 @@ Region       factor(7)   factor(7)</code></pre>
 <span id="cb25-9"><a href="#cb25-9" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"Mean Poisson Deviance:"</span>, deviance)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-stdout">
-<pre><code>Mean Poisson Deviance: 0.4670904</code></pre>
+<pre><code>Mean Poisson Deviance: 0.4670902</code></pre>
 </div>
 </div>
 </section>
