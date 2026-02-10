@@ -68,8 +68,8 @@ test  = pd.read_parquet(PATH / "test.parquet")
 #| include: false
 # configurations
 COLD_RUN = False
-LOAD_MID_LGB = False
-SAVE_MID_LGB = True
+LOAD_MID_LGB = True
+SAVE_MID_LGB = False
 
 if COLD_RUN:
   np.random.seed(42)
