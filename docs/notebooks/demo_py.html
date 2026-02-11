@@ -946,14 +946,13 @@ document.querySelectorAll('.fa-regular.fa-copy').forEach(function(element) {
 <div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co"># build a surrogate model</span></span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>mid_glm <span class="op">=</span> mid.MIDExplainer(</span>
 <span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>  estimator<span class="op">=</span>fit_glm,</span>
-<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>  link<span class="op">=</span><span class="st">"log"</span>,</span>
-<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>  digits<span class="op">=</span><span class="va">None</span></span>
-<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>mid_glm.fit(</span>
-<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>  X_train,</span>
-<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a>  y<span class="op">=</span>fit_glm.predict(one_hot_encode(X_train))</span>
-<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>  link<span class="op">=</span><span class="st">"log"</span></span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>mid_glm.fit(</span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>  X_train,</span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>  y<span class="op">=</span>fit_glm.predict(one_hot_encode(X_train))</span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div id="mid_glm" class="cell-output cell-output-display" data-execution_count="6">
 <style>#sk-container-id-2 {
@@ -1433,8 +1432,7 @@ div.sk-label-container:hover .sk-estimator-doc-link.fitted:hover,
     height: 14px;
     cursor: pointer;
 }
-</style><div id="sk-container-id-2" class="sk-top-container"><div class="sk-text-repr-fallback"><pre>MIDExplainer(digits=None, estimator=PoissonRegressor(alpha=0, max_iter=300),
-             link='log')</pre><b>In a Jupyter environment, please rerun this cell to show the HTML representation or trust the notebook. <br>On GitHub, the HTML representation is unable to render, please try loading this page with nbviewer.org.</b></div><div class="sk-container" hidden=""><div class="sk-item sk-dashed-wrapped"><div class="sk-label-container"><div class="sk-label fitted sk-toggleable"><input class="sk-toggleable__control sk-hidden--visually" id="sk-estimator-id-2" type="checkbox"><label for="sk-estimator-id-2" class="sk-toggleable__label fitted sk-toggleable__label-arrow"><div><div>MIDExplainer</div></div><div><span class="sk-estimator-doc-link fitted">i<span>Fitted</span></span></div></label><div class="sk-toggleable__content fitted" data-param-prefix="">
+</style><div id="sk-container-id-2" class="sk-top-container"><div class="sk-text-repr-fallback"><pre>MIDExplainer(estimator=PoissonRegressor(alpha=0, max_iter=300), link='log')</pre><b>In a Jupyter environment, please rerun this cell to show the HTML representation or trust the notebook. <br>On GitHub, the HTML representation is unable to render, please try loading this page with nbviewer.org.</b></div><div class="sk-container" hidden=""><div class="sk-item sk-dashed-wrapped"><div class="sk-label-container"><div class="sk-label fitted sk-toggleable"><input class="sk-toggleable__control sk-hidden--visually" id="sk-estimator-id-2" type="checkbox"><label for="sk-estimator-id-2" class="sk-toggleable__label fitted sk-toggleable__label-arrow"><div><div>MIDExplainer</div></div><div><span class="sk-estimator-doc-link fitted">i<span>Fitted</span></span></div></label><div class="sk-toggleable__content fitted" data-param-prefix="">
         <div class="estimator-table">
             <details>
                 <summary>Parameters</summary>
@@ -1521,7 +1519,7 @@ div.sk-label-container:hover .sk-estimator-doc-link.fitted:hover,
 <td class="param">split&nbsp;</td>
 <td class="value">'quantile'</td>
 </tr>
-<tr class="user-set odd">
+<tr class="default odd">
 <td><em></em></td>
 <td class="param">digits&nbsp;</td>
 <td class="value">None</td>
@@ -3174,7 +3172,7 @@ div.sk-label-container:hover .sk-estimator-doc-link.fitted:hover,
 <tr class="default odd">
 <td><em></em></td>
 <td class="param">digits&nbsp;</td>
-<td class="value">3</td>
+<td class="value">None</td>
 </tr>
 <tr class="default even">
 <td><em></em></td>
@@ -3392,7 +3390,7 @@ document.querySelectorAll('.fa-regular.fa-copy').forEach(function(element) {
 <span id="cb21-14"><a href="#cb21-14" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"Mean Poisson Deviance:"</span>, <span class="bu">round</span>(deviance, <span class="dv">6</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-stdout">
-<pre><code>Uninterpreted Variation Ratio: 0.09313
+<pre><code>Uninterpreted Variation Ratio: 0.093125
 Mean Poisson Deviance: 0.467089</code></pre>
 </div>
 </div>
@@ -3412,7 +3410,7 @@ Mean Poisson Deviance: 0.467089</code></pre>
 <span id="cb23-7"><a href="#cb23-7" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"R squared:"</span>, <span class="bu">round</span>(r2_mid, <span class="dv">10</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-stdout">
-<pre><code>R squared: 0.9050963659</code></pre>
+<pre><code>R squared: 0.9051021397</code></pre>
 </div>
 </div>
 </section>

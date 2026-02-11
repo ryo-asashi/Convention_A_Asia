@@ -68,8 +68,8 @@ test  = pd.read_parquet(PATH / "test.parquet")
 #| include: false
 # configurations
 COLD_RUN = False
-LOAD_MID_LGB = True
-SAVE_MID_LGB = False
+LOAD_MID_LGB = False
+SAVE_MID_LGB = True
 
 if COLD_RUN:
   np.random.seed(42)
@@ -150,8 +150,7 @@ We build the `MIDExplainer()` class to the GAM to construct a first-order MID mo
 # build a surrogate model
 mid_glm = mid.MIDExplainer(
   estimator=fit_glm,
-  link="log",
-  digits=None
+  link="log"
 )
 
 mid_glm.fit(
