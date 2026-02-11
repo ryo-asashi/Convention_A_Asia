@@ -150,7 +150,8 @@ We build the `MIDExplainer()` class to the GAM to construct a first-order MID mo
 # build a surrogate model
 mid_glm = mid.MIDExplainer(
   estimator=fit_glm,
-  link="log"
+  link="log",
+  digits=None
 )
 
 mid_glm.fit(
