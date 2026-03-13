@@ -295,6 +295,8 @@ By visualizing these contributions in a waterfall plot, we can identify which sp
 
 ## The Black-Box: LightGBM
 
+![](../assets/Tree_Based_Model.png){fig-align="center" width="1000px"}
+
 While GAMs are transparent, GBMs such as **LightGBM** often yield superior predictive power by capturing high-order interactions.
 However, this accuracy comes at the cost of being a black box.
 

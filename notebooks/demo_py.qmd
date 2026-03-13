@@ -68,8 +68,8 @@ test  = pd.read_parquet(PATH / "test.parquet")
 #| include: false
 # configurations
 COLD_RUN = False
-LOAD_MID_LGB = False
-SAVE_MID_LGB = True
+LOAD_MID_LGB = True
+SAVE_MID_LGB = False
 
 if COLD_RUN:
   np.random.seed(42)
@@ -227,10 +227,10 @@ for feature in X_train.columns:
   )
   plots.append(p)
 
-display(
+(
   (plots[0] | plots[1] | plots[2] | plots[5]) /
   (plots[3] | plots[4] | plots[6])
-)
+).show()
 ```
 
 ### Effect Importance
@@ -256,7 +256,7 @@ p2 = (
   labs(subtitle="Distribution of Effects") +
   theme(legend_position="none", axis_text_y=element_blank())
 )
-display(p1 | p2)
+(p1 | p2).show()
 ```
 
 For interaction terms, the importance is similarly calculated using $g_{jk}(X_j, X_k)$.
@@ -295,7 +295,7 @@ p2 = (
   labs(y="Prediction", title="",
        subtitle="Change in original scale")
   )
-display(p1 | p2)
+(p1 | p2).show()
 ```
 
 Unlike standard black-box models, MID's low-order structure allows us to compute these expectations efficiently and interpret the variation across curves (the "thickness" of the ICE plot) as a direct consequence of specified interaction terms $g_{jk}$.
@@ -326,15 +326,17 @@ for idx in row_ids:
   )
   bd_plots.append(p)
 
-display(
+(
   (bd_plots[0] | bd_plots[1]) /
   (bd_plots[2] | bd_plots[3]) 
-)
+).show()
 ```
 
 By visualizing these contributions in a waterfall plot, we can identify which specific risk factors or interaction effects drove the prediction for a particular instance, such as a high-risk policyholder.
 
 ## The Black-Box: LightGBM
+
+![](../assets/Tree_Based_Model.png){fig-align="center" width="1000px"}
 
 While GLMs are transparent, GBMs such as **LightGBM** often yield superior predictive power by capturing high-order interactions.
 However, this accuracy comes at the cost of being a black box.
@@ -506,10 +508,10 @@ for feature in X_train.columns:
   )
   plots.append(p)
 
-display(
+(
   (plots[0] | plots[1] | plots[2] | plots[5]) /
   (plots[3] | plots[4] | plots[6])
-)
+).show()
 ```
 
 A key advantage of `{midlearn}` is its ability to isolate interaction effects $g_{jk}$ from main effects $g_j$.
@@ -529,7 +531,7 @@ p2 = (
   theme(axis_text_y=element_blank(),
         legend_position="bottom")
 )
-display(p1 | p2)
+(p1 | p2).show()
 ```
 
 ### Effect Importance
@@ -551,7 +553,7 @@ p2 = (
   labs(title="", subtitle="Distribution of effects") +
   theme(axis_text_y=element_blank(), legend_position="none")
 )
-display(p1 | p2)
+(p1 | p2).show()
 ```
 
 ### Conditional Expectation
@@ -583,7 +585,7 @@ p2 = (
   labs(y = "Prediction", title = "",
      subtitle = "Change in original scale")
   )
-display(p1 | p2)
+(p1 | p2).show()
 ```
 
 ### Additive Attribution
@@ -610,10 +612,10 @@ for idx in row_ids:
   )
   bd_plots.append(p)
 
-display(
+(
   (bd_plots[0] | bd_plots[1]) /
   (bd_plots[2] | bd_plots[3]) 
-)
+).show()
 ```
 
 ## Conclusion
