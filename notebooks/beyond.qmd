@@ -30,7 +30,6 @@ library(midr)
 library(ggplot2)
 library(gridExtra)
 library(patchwork)
-theme_set(theme_midr())
 
 data(flchain, package = "survival")
 ```
@@ -119,6 +118,11 @@ plot(
 
 ### Feature Importance
 
+Just as survival probabilities change over time, so does the relative impact of each predictor.
+What strongly influences short-term survival may not be the primary driver of long-term outcomes.
+
+For the MID-based surrogate models, `mid.importance()` function captures this dynamic behavior, allowing you to visualize how the importance of individual features and their interactions evolves across the specified time horizon.
+
 ```{r}
 imp <- mid.importance(mid_model)
 
@@ -128,6 +132,7 @@ p <- ggmid(
   terms = rev(head(mid.terms(imp), 10))
 ) +
   theme(legend.position = "none") +
+  labs(subtitle = "Feature Importance") +
   coord_flip()
 
 q <- ggmid(
@@ -143,7 +148,19 @@ q <- ggmid(
 p / q
 ```
 
+```{r}
+p1 <- ggmid(imp[50], fill = "steelblue") +
+  labs(subtitle = paste("Feature Importance on Day", labels(mid_model)[50]))
+p2 <- ggmid(imp[100], fill = "maroon") +
+  labs(subtitle = paste("Feature Importance on Day", labels(mid_model)[100]))
+p1 + p2
+```
+
 ### Feature Effects
+
+Beyond knowing which features matter, it is crucial to understand how they influence predictions over time.
+By evaluating the component functions, you can extract the estimated main and interaction effects on survival probabilities.
+This provides a clear, time-varying view of partial dependencies, showing exactly how different values of a feature shift the survival curve.
 
 ```{r}
 #| fig.height: 8
@@ -158,12 +175,19 @@ plots <- mid.plots(
   limits = c(-0.05, 1.05)
 )
 
-plots[[4]] <- plots[[4]] + labs(x = "Days from Sample Collection")
-
-grid.arrange(nrow = 4, grobs = plots)
+plots[[1]] <- plots[[1]] +
+  labs(subtitle = "Feature Effect on Survival Probability")
+plots[[4]] <- plots[[4]] +
+  labs(x = "Days from Sample Collection")
+plots[[1]] / plots[[2]] / plots[[3]] / plots[[4]]
 ```
 
 ### Breakdown of Effects
+
+To build trust in clinical or business applications, we often need to explain individual predictions.
+
+The `mid.breakdown()` function zooms in on a single observation, decomposing that specific patient's predicted survival curve into additive contributions from the baseline and each feature. 
+This makes it intuitively clear exactly which risk factors are driving an individual's prognosis at any given moment.
 
 ```{r}
 brk <- mid.breakdown(mid_model, data = flchain[1 ,])
@@ -174,6 +198,7 @@ p <- ggmid(
   terms = rev(head(mid.terms(imp, interactions = FALSE)))
 ) +
   theme(legend.position = "none") +
+  labs(subtitle = "Breakdown of Prediction") +
   coord_flip()
 
 q <- ggmid(
@@ -189,12 +214,26 @@ q <- ggmid(
 p / q
 ```
 
+```{r}
+p1 <- ggmid(brk[50], fill = "steelblue") +
+  labs(subtitle = paste("Breakdown on Day", labels(mid_model)[50]))
+p2 <- ggmid(brk[100], fill = "maroon") +
+  labs(subtitle = paste("Breakdown on Day", labels(mid_model)[100]))
+p1 + p2
+```
+
 ### Conditional Expectation
 
+For a more granular look at how a model behaves, Individual Conditional Expectation (ICE) plots are an invaluable tool.
+
+Using `mid.conditional()`, you can explore counterfactual "what-if" scenarios—visualizing how modifying a specific feature alters the predicted survival outcome for an individual patient.
+This highlights the change of feature effects in time.
+
 ```{r}
-#| fig.height: 3
-#| fig.width: 7.25
 con <- mid.conditional(mid_model, variable = "age", data = flchain[100, ])
-ggmid(con, theme = "viridis", type = "series") +
+p1 <- ggmid(con, theme = "cividis") +
+  labs(subtitle = "Conditional Expectation", color = "Days")
+p2 <- ggmid(con, theme = "viridis", type = "series") +
   labs(x = "Days from Sample Collection")
+p1 / p2
 ```
