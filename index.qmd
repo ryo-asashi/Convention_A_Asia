@@ -25,6 +25,7 @@ This Quarto website contains the following sections:
 1.  [**Dataset**](./notebooks/dataset.html): Data cleaning and feature engineering of the French Motor Third-Party Liability dataset.
 2.  [**R Demo**](./notebooks/demo_r.html): A demonstration of the `{midr}` and `{midlearn}` packages in R.
 3.  [**Python Demo**](./notebooks/demo_py.html): A demonstration of the `{midlearn}` library, providing a seamless interface for Python users.
+4.  [**Going Beyond**](./notebooks/beyond.html): A demonstration of a new feature in `{midr}` 0.6.0: interpretation of survival models.
 
 ------------------------------------------------------------------------
 

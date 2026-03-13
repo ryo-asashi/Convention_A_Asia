@@ -14,6 +14,8 @@ website:
         text: R Demo
       - href: notebooks/demo_py.qmd
         text: Python Demo
+      - href: notebooks/beyond.qmd
+        text: Going Beyond
 
 format:
   html:

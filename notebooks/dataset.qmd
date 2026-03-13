@@ -7,6 +7,8 @@ title: "French Motor Third-Party Liability Dataset"
 In this section, we prepare the **French Motor Third-Party Liability (freMTPL2freq) dataset**, a standard benchmark in actuarial science.
 Our goal is to transform the raw data into a clean, structured format suitable for both R and Python environments.
 
+![](../assets/freMTPL.png){fig-align="center" width="1000px"}
+
 ## Data Preprocessing
 
 The following transformations are applied to handle outliers, improve model stability, and align with actuarial pricing practices:

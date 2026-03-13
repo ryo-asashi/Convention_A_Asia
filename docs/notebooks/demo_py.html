@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.7.32">
+<meta name="generator" content="quarto-1.8.25">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
@@ -67,14 +67,15 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <meta name="quarto:offset" content="../">
 <script src="../site_libs/quarto-html/quarto.js" type="module"></script>
 <script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/axe/axe-check.js" type="module"></script>
 <script src="../site_libs/quarto-html/popper.min.js"></script>
 <script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
 <script src="../site_libs/quarto-html/anchor.min.js"></script>
 <link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="../site_libs/quarto-html/quarto-syntax-highlighting-37eea08aefeeee20ff55810ff984fec1.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-7b89279ff1a6dce999919e0e67d4d9ec.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../site_libs/bootstrap/bootstrap-cc63fce9873912f1bbbccf05079cc9ea.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-ffa9a6279353761231ec249df0a7fdd3.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -123,7 +124,7 @@ const typesetMath = (el) => {
     var macros = [];
     for (var i = 0; i < mathElements.length; i++) {
       var texText = mathElements[i].firstChild;
-      if (mathElements[i].tagName == "SPAN") {
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
         window.katex.render(texText.data, mathElements[i], {
           displayMode: mathElements[i].classList.contains('display'),
           throwOnError: false,
@@ -148,6 +149,8 @@ window.Quarto = {
     <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
       <div class="navbar-container container-fluid">
       <div class="navbar-brand-container mx-auto">
+    <a href="../index.html" class="navbar-brand navbar-brand-logo">
+    </a>
     <a class="navbar-brand" href="../index.html">
     <span class="navbar-title">Maximizing the Interpretation of Black-Box Models</span>
     </a>
@@ -173,6 +176,10 @@ window.Quarto = {
   <li class="nav-item">
     <a class="nav-link active" href="../notebooks/demo_py.html" aria-current="page"> 
 <span class="menu-text">Python Demo</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../notebooks/beyond.html"> 
+<span class="menu-text">Going Beyond</span></a>
   </li>  
 </ul>
           </div> <!-- /navcollapse -->
@@ -249,7 +256,7 @@ window.Quarto = {
 <i class="callout-icon"></i>
 </div>
 <div class="callout-title-container flex-fill">
-Compatibility Notice
+<span class="screen-reader-only">Warning</span>Compatibility Notice
 </div>
 </div>
 <div class="callout-body-container callout-body">
@@ -271,7 +278,7 @@ f(\mathbf{X}) = g_\emptyset + \sum_{j} g_j(X_{j}) + \sum_{j &lt; k} g_{jk}(X_{j}
 <div id="setup" class="cell" data-message="false" data-warnigs="false" data-execution_count="1">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># utility</span></span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># utility</span></span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pathlib <span class="im">import</span> Path</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="co"># data manipulation</span></span>
@@ -296,7 +303,7 @@ f(\mathbf{X}) = g_\emptyset + \sum_{j} g_j(X_{j}) + \sum_{j &lt; k} g_{jk}(X_{j}
 <span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a><span class="co"># load training and testing datasets</span></span>
 <span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>PATH <span class="op">=</span> Path(<span class="st">"../data"</span>)</span>
 <span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a>train <span class="op">=</span> pd.read_parquet(PATH <span class="op">/</span> <span class="st">"train.parquet"</span>)</span>
-<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a>test  <span class="op">=</span> pd.read_parquet(PATH <span class="op">/</span> <span class="st">"test.parquet"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a>test  <span class="op">=</span> pd.read_parquet(PATH <span class="op">/</span> <span class="st">"test.parquet"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output cell-output-stderr">
 <pre><code>Error importing in API mode: ImportError('On Windows, cffi mode "ANY" is only "ABI".')
@@ -307,14 +314,14 @@ Trying to import in ABI mode.</code></pre>
 <div id="split_xy" class="cell" data-execution_count="3">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># training set</span></span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># training set</span></span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>X_train <span class="op">=</span> train.drop([<span class="st">'Frequency'</span>, <span class="st">'Exposure'</span>], axis<span class="op">=</span><span class="dv">1</span>)</span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>y_train <span class="op">=</span> train[<span class="st">'Frequency'</span>]</span>
 <span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>w_train <span class="op">=</span> train[<span class="st">'Exposure'</span>]</span>
 <span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="co"># testing set</span></span>
 <span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>X_test  <span class="op">=</span> test.drop([<span class="st">'Frequency'</span>, <span class="st">'Exposure'</span>], axis<span class="op">=</span><span class="dv">1</span>)</span>
 <span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>y_test  <span class="op">=</span> test[<span class="st">'Frequency'</span>]</span>
-<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>w_test  <span class="op">=</span> test[<span class="st">'Exposure'</span>]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>w_test  <span class="op">=</span> test[<span class="st">'Exposure'</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div>
 <p>A key component of our evaluation is the <strong>Weighted Mean Poisson Deviance</strong> defined as follows:</p>
@@ -331,7 +338,7 @@ d(y_i,\hat{y}_i) = 2\left[y_i (\log y_i - \log \hat{y}_i) - (y_i - \hat{y}_i)\ri
 <div id="cell-fit_glm" class="cell" data-execution_count="4">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># define variable encoder for PoissonRegressor</span></span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># define variable encoder for PoissonRegressor</span></span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> one_hot_encode(X):</span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>  cats <span class="op">=</span> X.select_dtypes(include<span class="op">=</span>[<span class="st">'object'</span>, <span class="st">'category'</span>]).columns.tolist()</span>
 <span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>  nums <span class="op">=</span> X.select_dtypes(exclude<span class="op">=</span>[<span class="st">'object'</span>, <span class="st">'category'</span>]).columns.tolist()</span>
@@ -347,7 +354,7 @@ d(y_i,\hat{y}_i) = 2\left[y_i (\log y_i - \log \hat{y}_i) - (y_i - \hat{y}_i)\ri
 <span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a><span class="co"># initialize and train a Poisson GLM</span></span>
 <span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>fit_glm <span class="op">=</span> lm.PoissonRegressor(alpha<span class="op">=</span><span class="dv">0</span>, max_iter<span class="op">=</span><span class="dv">300</span>)</span>
-<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a>fit_glm.fit(one_hot_encode(X_train), y_train, sample_weight<span class="op">=</span>w_train)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a>fit_glm.fit(one_hot_encode(X_train), y_train, sample_weight<span class="op">=</span>w_train)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div id="fit_glm" class="cell-output cell-output-display" data-execution_count="4">
 <style>#sk-container-id-1 {
@@ -832,7 +839,7 @@ div.sk-label-container:hover .sk-estimator-doc-link.fitted:hover,
             <details>
                 <summary>Parameters</summary>
                 
-<table class="parameters-table caption-top table table-sm table-striped small" data-quarto-postprocess="true">
+<table class="parameters-table caption-top table table-sm table-striped small">
 <tbody>
 <tr class="user-set odd">
 <td><em></em></td>
@@ -922,7 +929,7 @@ document.querySelectorAll('.fa-regular.fa-copy').forEach(function(element) {
 <div id="pred_fit_glm" class="cell" data-execution_count="5">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># evaluate fitted model</span></span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># evaluate fitted model</span></span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>y_pred_fit_glm <span class="op">=</span> fit_glm.predict(one_hot_encode(X_test))</span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>deviance <span class="op">=</span> mean_poisson_deviance(</span>
@@ -930,7 +937,7 @@ document.querySelectorAll('.fa-regular.fa-copy').forEach(function(element) {
 <span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>  y_pred<span class="op">=</span>y_pred_fit_glm,</span>
 <span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>  sample_weight<span class="op">=</span>w_test</span>
 <span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"Mean Poisson Deviance:"</span>, <span class="bu">round</span>(deviance, <span class="dv">6</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"Mean Poisson Deviance:"</span>, <span class="bu">round</span>(deviance, <span class="dv">6</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output cell-output-stdout">
 <pre><code>Mean Poisson Deviance: 0.470569</code></pre>
@@ -943,7 +950,7 @@ document.querySelectorAll('.fa-regular.fa-copy').forEach(function(element) {
 <div id="cell-mid_glm" class="cell" data-execution_count="6">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co"># build a surrogate model</span></span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co"># build a surrogate model</span></span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>mid_glm <span class="op">=</span> mid.MIDExplainer(</span>
 <span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>  estimator<span class="op">=</span>fit_glm,</span>
 <span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>  link<span class="op">=</span><span class="st">"log"</span></span>
@@ -952,7 +959,7 @@ document.querySelectorAll('.fa-regular.fa-copy').forEach(function(element) {
 <span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>mid_glm.fit(</span>
 <span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>  X_train,</span>
 <span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>  y<span class="op">=</span>fit_glm.predict(one_hot_encode(X_train))</span>
-<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div id="mid_glm" class="cell-output cell-output-display" data-execution_count="6">
 <style>#sk-container-id-2 {
@@ -1437,7 +1444,7 @@ div.sk-label-container:hover .sk-estimator-doc-link.fitted:hover,
             <details>
                 <summary>Parameters</summary>
                 
-<table class="parameters-table caption-top table table-sm table-striped small" data-quarto-postprocess="true">
+<table class="parameters-table caption-top table table-sm table-striped small">
 <tbody>
 <tr class="user-set odd">
 <td><em></em></td>
@@ -1564,7 +1571,7 @@ div.sk-label-container:hover .sk-estimator-doc-link.fitted:hover,
             <details>
                 <summary>Parameters</summary>
                 
-<table class="parameters-table caption-top table table-sm table-striped small" data-quarto-postprocess="true">
+<table class="parameters-table caption-top table table-sm table-striped small">
 <tbody>
 <tr class="user-set odd">
 <td><em></em></td>
@@ -1654,7 +1661,7 @@ document.querySelectorAll('.fa-regular.fa-copy').forEach(function(element) {
 <div id="pred_mid_glm" class="cell" data-execution_count="7">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="co"># evaluate fitted surrogate</span></span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="co"># evaluate fitted surrogate</span></span>
 <span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(</span>
 <span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Uninterpreted Variation Ratio:"</span>,</span>
 <span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>  <span class="bu">round</span>(mid_glm.ratio[<span class="st">'working'</span>], <span class="dv">6</span>)</span>
@@ -1667,7 +1674,7 @@ document.querySelectorAll('.fa-regular.fa-copy').forEach(function(element) {
 <span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a>  y_pred<span class="op">=</span>y_pred_mid_glm,</span>
 <span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a>  sample_weight<span class="op">=</span>w_test</span>
 <span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb8-14"><a href="#cb8-14" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"Mean Poisson Deviance:"</span>, <span class="bu">round</span>(deviance, <span class="dv">6</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb8-14"><a href="#cb8-14" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"Mean Poisson Deviance:"</span>, <span class="bu">round</span>(deviance, <span class="dv">6</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output cell-output-stdout">
 <pre><code>Uninterpreted Variation Ratio: 0.0
@@ -1687,13 +1694,13 @@ Mean Poisson Deviance: 0.470569</code></pre>
 <div id="r2_mid_glm" class="cell" data-execution_count="8">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="co"># calculate R-squared on testing dataset</span></span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="co"># calculate R-squared on testing dataset</span></span>
 <span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>r2_mid <span class="op">=</span> r2_score(</span>
 <span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>  y_true<span class="op">=</span>np.log(fit_glm.predict(one_hot_encode(X_test))),</span>
 <span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>  y_pred<span class="op">=</span>np.log(mid_glm.predict(X_test)),</span>
 <span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>  sample_weight<span class="op">=</span>w_test</span>
 <span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"R squared:"</span>, <span class="bu">round</span>(r2_mid, <span class="dv">10</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"R squared:"</span>, <span class="bu">round</span>(r2_mid, <span class="dv">10</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output cell-output-stdout">
 <pre><code>R squared: 1.0</code></pre>
@@ -1708,7 +1715,7 @@ Mean Poisson Deviance: 0.470569</code></pre>
 <div id="cell-effects_mid_glm" class="cell" data-execution_count="9">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="co"># main effects of MID surrogate</span></span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="co"># main effects of MID surrogate</span></span>
 <span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>plots <span class="op">=</span> []</span>
 <span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> feature <span class="kw">in</span> X_train.columns:</span>
 <span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>  p <span class="op">=</span> (</span>
@@ -1721,7 +1728,7 @@ Mean Poisson Deviance: 0.470569</code></pre>
 <span id="cb12-11"><a href="#cb12-11" aria-hidden="true" tabindex="-1"></a>display(</span>
 <span id="cb12-12"><a href="#cb12-12" aria-hidden="true" tabindex="-1"></a>  (plots[<span class="dv">0</span>] <span class="op">|</span> plots[<span class="dv">1</span>] <span class="op">|</span> plots[<span class="dv">2</span>] <span class="op">|</span> plots[<span class="dv">5</span>]) <span class="op">/</span></span>
 <span id="cb12-13"><a href="#cb12-13" aria-hidden="true" tabindex="-1"></a>  (plots[<span class="dv">3</span>] <span class="op">|</span> plots[<span class="dv">4</span>] <span class="op">|</span> plots[<span class="dv">6</span>])</span>
-<span id="cb12-14"><a href="#cb12-14" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb12-14"><a href="#cb12-14" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output cell-output-display">
 <div>
@@ -1741,7 +1748,7 @@ Mean Poisson Deviance: 0.470569</code></pre>
 <div id="cell-imp_glm" class="cell" data-message="false" data-execution_count="10">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>imp_glm <span class="op">=</span> mid_glm.importance(max_nsamples<span class="op">=</span><span class="dv">2000</span>)</span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>imp_glm <span class="op">=</span> mid_glm.importance(max_nsamples<span class="op">=</span><span class="dv">2000</span>)</span>
 <span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>p1 <span class="op">=</span> (</span>
 <span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>  imp_glm.plot(fill<span class="op">=</span><span class="st">"steelblue"</span>) <span class="op">+</span></span>
@@ -1752,7 +1759,7 @@ Mean Poisson Deviance: 0.470569</code></pre>
 <span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a>  labs(subtitle<span class="op">=</span><span class="st">"Distribution of Effects"</span>) <span class="op">+</span></span>
 <span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a>  theme(legend_position<span class="op">=</span><span class="st">"none"</span>, axis_text_y<span class="op">=</span>element_blank())</span>
 <span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb13-12"><a href="#cb13-12" aria-hidden="true" tabindex="-1"></a>display(p1 <span class="op">|</span> p2)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb13-12"><a href="#cb13-12" aria-hidden="true" tabindex="-1"></a>display(p1 <span class="op">|</span> p2)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output cell-output-display">
 <div>
@@ -1773,7 +1780,7 @@ Mean Poisson Deviance: 0.470569</code></pre>
 <div id="cell-ice_glm" class="cell" data-message="false" data-execution_count="11">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>ice_glm_link <span class="op">=</span> mid_glm.conditional(</span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>ice_glm_link <span class="op">=</span> mid_glm.conditional(</span>
 <span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>  <span class="bu">type</span><span class="op">=</span><span class="st">"link"</span>, variable<span class="op">=</span><span class="st">"DrivAge"</span>, data<span class="op">=</span>X_train.sample(<span class="dv">200</span>)</span>
 <span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>)</span>
 <span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>ice_glm <span class="op">=</span> mid_glm.conditional(</span>
@@ -1794,7 +1801,7 @@ Mean Poisson Deviance: 0.470569</code></pre>
 <span id="cb14-19"><a href="#cb14-19" aria-hidden="true" tabindex="-1"></a>  labs(y<span class="op">=</span><span class="st">"Prediction"</span>, title<span class="op">=</span><span class="st">""</span>,</span>
 <span id="cb14-20"><a href="#cb14-20" aria-hidden="true" tabindex="-1"></a>       subtitle<span class="op">=</span><span class="st">"Change in original scale"</span>)</span>
 <span id="cb14-21"><a href="#cb14-21" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb14-22"><a href="#cb14-22" aria-hidden="true" tabindex="-1"></a>display(p1 <span class="op">|</span> p2)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb14-22"><a href="#cb14-22" aria-hidden="true" tabindex="-1"></a>display(p1 <span class="op">|</span> p2)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output cell-output-display">
 <div>
@@ -1815,7 +1822,7 @@ g(\mathbf{x}) = \underbrace{g_\emptyset}_{\text{Intercept}} + \underbrace{\sum_{
 <div id="cell-bd_glm" class="cell" data-message="false" data-execution_count="12">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>np.random.seed(<span class="dv">42</span>)</span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>np.random.seed(<span class="dv">42</span>)</span>
 <span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>row_ids <span class="op">=</span> <span class="bu">sorted</span>(np.random.randint(<span class="dv">0</span>, train.shape[<span class="dv">0</span>], <span class="dv">4</span>).tolist())</span>
 <span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>bd_plots <span class="op">=</span> []</span>
@@ -1832,7 +1839,7 @@ g(\mathbf{x}) = \underbrace{g_\emptyset}_{\text{Intercept}} + \underbrace{\sum_{
 <span id="cb15-15"><a href="#cb15-15" aria-hidden="true" tabindex="-1"></a>display(</span>
 <span id="cb15-16"><a href="#cb15-16" aria-hidden="true" tabindex="-1"></a>  (bd_plots[<span class="dv">0</span>] <span class="op">|</span> bd_plots[<span class="dv">1</span>]) <span class="op">/</span></span>
 <span id="cb15-17"><a href="#cb15-17" aria-hidden="true" tabindex="-1"></a>  (bd_plots[<span class="dv">2</span>] <span class="op">|</span> bd_plots[<span class="dv">3</span>]) </span>
-<span id="cb15-18"><a href="#cb15-18" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb15-18"><a href="#cb15-18" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output cell-output-display">
 <div>
@@ -1851,7 +1858,7 @@ g(\mathbf{x}) = \underbrace{g_\emptyset}_{\text{Intercept}} + \underbrace{\sum_{
 <div id="cell-fit_lgb" class="cell" data-execution_count="13">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb16"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="co"># data preprocessing for LightGBM</span></span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="co"># data preprocessing for LightGBM</span></span>
 <span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> str_to_cat(X):</span>
 <span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>  cats <span class="op">=</span> X.select_dtypes(include<span class="op">=</span>[<span class="st">'object'</span>, <span class="st">'category'</span>]).columns.tolist()</span>
 <span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>  X <span class="op">=</span> X.copy()</span>
@@ -1892,7 +1899,7 @@ g(\mathbf{x}) = \underbrace{g_\emptyset}_{\text{Intercept}} + \underbrace{\sum_{
 <span id="cb16-39"><a href="#cb16-39" aria-hidden="true" tabindex="-1"></a>  eval_set<span class="op">=</span>[(valid_X, valid_y)],</span>
 <span id="cb16-40"><a href="#cb16-40" aria-hidden="true" tabindex="-1"></a>  eval_sample_weight<span class="op">=</span>[valid_w],</span>
 <span id="cb16-41"><a href="#cb16-41" aria-hidden="true" tabindex="-1"></a>  callbacks<span class="op">=</span>[lgb.early_stopping(stopping_rounds<span class="op">=</span><span class="dv">50</span>)]</span>
-<span id="cb16-42"><a href="#cb16-42" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb16-42"><a href="#cb16-42" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output cell-output-stdout">
 <pre><code>Training until validation scores don't improve for 50 rounds
@@ -2387,7 +2394,7 @@ div.sk-label-container:hover .sk-estimator-doc-link.fitted:hover,
             <details>
                 <summary>Parameters</summary>
                 
-<table class="parameters-table caption-top table table-sm table-striped small" data-quarto-postprocess="true">
+<table class="parameters-table caption-top table table-sm table-striped small">
 <tbody>
 <tr class="default odd">
 <td><em></em></td>
@@ -2542,7 +2549,7 @@ document.querySelectorAll('.fa-regular.fa-copy').forEach(function(element) {
 <div id="pred_fit_lgb" class="cell" data-execution_count="14">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb18"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="co"># evaluate fitted model</span></span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="co"># evaluate fitted model</span></span>
 <span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>y_pred_fit_lgb <span class="op">=</span> fit_lgb.predict(str_to_cat(X_test))</span>
 <span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a>deviance <span class="op">=</span> mean_poisson_deviance(</span>
@@ -2550,7 +2557,7 @@ document.querySelectorAll('.fa-regular.fa-copy').forEach(function(element) {
 <span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a>  y_pred<span class="op">=</span>y_pred_fit_lgb,</span>
 <span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a>  sample_weight<span class="op">=</span>w_test</span>
 <span id="cb18-8"><a href="#cb18-8" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb18-9"><a href="#cb18-9" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"Mean Poisson Deviance:"</span>, <span class="bu">round</span>(deviance, <span class="dv">6</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb18-9"><a href="#cb18-9" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"Mean Poisson Deviance:"</span>, <span class="bu">round</span>(deviance, <span class="dv">6</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output cell-output-stdout">
 <pre><code>Mean Poisson Deviance: 0.465148</code></pre>
@@ -2568,7 +2575,7 @@ f_{LGB}(\mathbf{x}) \approx g(\mathbf{x}) = g_\emptyset + \sum_{j} g_j(x_j) + \s
 <i class="callout-icon"></i>
 </div>
 <div class="callout-title-container flex-fill">
-Computational Considerations
+<span class="screen-reader-only">Warning</span>Computational Considerations
 </div>
 </div>
 <div class="callout-body-container callout-body">
@@ -2578,7 +2585,7 @@ Computational Considerations
 <div id="mid_lgb" class="cell" data-execution_count="15">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb20"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="co"># build a surrogate model</span></span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="co"># build a surrogate model</span></span>
 <span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>mid_lgb <span class="op">=</span> mid.MIDExplainer(</span>
 <span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>  estimator<span class="op">=</span>fit_lgb,</span>
 <span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a>  interactions<span class="op">=</span><span class="va">True</span>,</span>
@@ -2590,7 +2597,7 @@ Computational Considerations
 <span id="cb20-10"><a href="#cb20-10" aria-hidden="true" tabindex="-1"></a>  X_train, </span>
 <span id="cb20-11"><a href="#cb20-11" aria-hidden="true" tabindex="-1"></a>  y<span class="op">=</span>fit_lgb.predict(X_train),</span>
 <span id="cb20-12"><a href="#cb20-12" aria-hidden="true" tabindex="-1"></a>  sample_weight<span class="op">=</span>w_train</span>
-<span id="cb20-13"><a href="#cb20-13" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb20-13"><a href="#cb20-13" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div>
 <div id="cell-load_mid_lgb" class="cell" data-execution_count="16">
@@ -3087,7 +3094,7 @@ div.sk-label-container:hover .sk-estimator-doc-link.fitted:hover,
             <details>
                 <summary>Parameters</summary>
                 
-<table class="parameters-table caption-top table table-sm table-striped small" data-quarto-postprocess="true">
+<table class="parameters-table caption-top table table-sm table-striped small">
 <tbody>
 <tr class="user-set odd">
 <td><em></em></td>
@@ -3219,7 +3226,7 @@ div.sk-label-container:hover .sk-estimator-doc-link.fitted:hover,
             <details>
                 <summary>Parameters</summary>
                 
-<table class="parameters-table caption-top table table-sm table-striped small" data-quarto-postprocess="true">
+<table class="parameters-table caption-top table table-sm table-striped small">
 <tbody>
 <tr class="default odd">
 <td><em></em></td>
@@ -3374,7 +3381,7 @@ document.querySelectorAll('.fa-regular.fa-copy').forEach(function(element) {
 <div id="pred_mid_lgb" class="cell" data-execution_count="17">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb21"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="co"># evaluate fitted surrogate</span></span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="co"># evaluate fitted surrogate</span></span>
 <span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(</span>
 <span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Uninterpreted Variation Ratio:"</span>,</span>
 <span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a>  <span class="bu">round</span>(mid_lgb.ratio[<span class="st">'working'</span>], <span class="dv">6</span>)</span>
@@ -3387,7 +3394,7 @@ document.querySelectorAll('.fa-regular.fa-copy').forEach(function(element) {
 <span id="cb21-11"><a href="#cb21-11" aria-hidden="true" tabindex="-1"></a>  y_pred<span class="op">=</span>y_pred_mid_lgb,</span>
 <span id="cb21-12"><a href="#cb21-12" aria-hidden="true" tabindex="-1"></a>  sample_weight<span class="op">=</span>w_test</span>
 <span id="cb21-13"><a href="#cb21-13" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb21-14"><a href="#cb21-14" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"Mean Poisson Deviance:"</span>, <span class="bu">round</span>(deviance, <span class="dv">6</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb21-14"><a href="#cb21-14" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"Mean Poisson Deviance:"</span>, <span class="bu">round</span>(deviance, <span class="dv">6</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output cell-output-stdout">
 <pre><code>Uninterpreted Variation Ratio: 0.093125
@@ -3401,13 +3408,13 @@ Mean Poisson Deviance: 0.467089</code></pre>
 <div id="r2_mid_lgb" class="cell" data-execution_count="18">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb23"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="co"># calculate R-squared on testing dataset</span></span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="co"># calculate R-squared on testing dataset</span></span>
 <span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>r2_mid <span class="op">=</span> r2_score(</span>
 <span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>  y_true<span class="op">=</span>np.log(fit_lgb.predict(str_to_cat(X_test))),</span>
 <span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a>  y_pred<span class="op">=</span>np.log(mid_lgb.predict(X_test)),</span>
 <span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a>  sample_weight<span class="op">=</span>w_test</span>
 <span id="cb23-6"><a href="#cb23-6" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb23-7"><a href="#cb23-7" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"R squared:"</span>, <span class="bu">round</span>(r2_mid, <span class="dv">10</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb23-7"><a href="#cb23-7" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"R squared:"</span>, <span class="bu">round</span>(r2_mid, <span class="dv">10</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output cell-output-stdout">
 <pre><code>R squared: 0.9051021397</code></pre>
@@ -3419,7 +3426,7 @@ Mean Poisson Deviance: 0.467089</code></pre>
 <div id="cell-effects_mid_lgb" class="cell" data-message="false" data-execution_count="19">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb25"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="co"># main effects of MID surrogate</span></span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb25"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="co"># main effects of MID surrogate</span></span>
 <span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>plots <span class="op">=</span> []</span>
 <span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> feature <span class="kw">in</span> X_train.columns:</span>
 <span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a>  p <span class="op">=</span> (</span>
@@ -3432,7 +3439,7 @@ Mean Poisson Deviance: 0.467089</code></pre>
 <span id="cb25-11"><a href="#cb25-11" aria-hidden="true" tabindex="-1"></a>display(</span>
 <span id="cb25-12"><a href="#cb25-12" aria-hidden="true" tabindex="-1"></a>  (plots[<span class="dv">0</span>] <span class="op">|</span> plots[<span class="dv">1</span>] <span class="op">|</span> plots[<span class="dv">2</span>] <span class="op">|</span> plots[<span class="dv">5</span>]) <span class="op">/</span></span>
 <span id="cb25-13"><a href="#cb25-13" aria-hidden="true" tabindex="-1"></a>  (plots[<span class="dv">3</span>] <span class="op">|</span> plots[<span class="dv">4</span>] <span class="op">|</span> plots[<span class="dv">6</span>])</span>
-<span id="cb25-14"><a href="#cb25-14" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb25-14"><a href="#cb25-14" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output cell-output-display">
 <div>
@@ -3446,7 +3453,7 @@ Mean Poisson Deviance: 0.467089</code></pre>
 <div id="cell-interaction" class="cell" data-execution_count="20">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb26"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a>p1 <span class="op">=</span> (</span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb26"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a>p1 <span class="op">=</span> (</span>
 <span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>  mid_lgb.plot(<span class="st">"LogDensity:Region"</span>, style<span class="op">=</span><span class="st">"data"</span>,</span>
 <span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a>               data<span class="op">=</span>train.sample(<span class="dv">2000</span>), theme<span class="op">=</span><span class="st">"bluescale"</span>) <span class="op">+</span></span>
 <span id="cb26-4"><a href="#cb26-4" aria-hidden="true" tabindex="-1"></a>  labs(subtitle<span class="op">=</span><span class="st">"Interaction Effect"</span>, y<span class="op">=</span><span class="st">""</span>) <span class="op">+</span></span>
@@ -3458,7 +3465,7 @@ Mean Poisson Deviance: 0.467089</code></pre>
 <span id="cb26-10"><a href="#cb26-10" aria-hidden="true" tabindex="-1"></a>  theme(axis_text_y<span class="op">=</span>element_blank(),</span>
 <span id="cb26-11"><a href="#cb26-11" aria-hidden="true" tabindex="-1"></a>        legend_position<span class="op">=</span><span class="st">"bottom"</span>)</span>
 <span id="cb26-12"><a href="#cb26-12" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb26-13"><a href="#cb26-13" aria-hidden="true" tabindex="-1"></a>display(p1 <span class="op">|</span> p2)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb26-13"><a href="#cb26-13" aria-hidden="true" tabindex="-1"></a>display(p1 <span class="op">|</span> p2)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output cell-output-display">
 <div>
@@ -3475,7 +3482,7 @@ Mean Poisson Deviance: 0.467089</code></pre>
 <div id="cell-imp_lgb" class="cell" data-message="false" data-execution_count="21">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb27"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a>imp_lgb <span class="op">=</span> mid_lgb.importance(max_nsamples<span class="op">=</span><span class="dv">2000</span>)</span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb27"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a>imp_lgb <span class="op">=</span> mid_lgb.importance(max_nsamples<span class="op">=</span><span class="dv">2000</span>)</span>
 <span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a>p1 <span class="op">=</span> (</span>
 <span id="cb27-4"><a href="#cb27-4" aria-hidden="true" tabindex="-1"></a>  imp_lgb.plot(theme<span class="op">=</span><span class="st">"bluescale@qual"</span>, max_nterms<span class="op">=</span><span class="dv">20</span>) <span class="op">+</span></span>
@@ -3487,7 +3494,7 @@ Mean Poisson Deviance: 0.467089</code></pre>
 <span id="cb27-10"><a href="#cb27-10" aria-hidden="true" tabindex="-1"></a>  labs(title<span class="op">=</span><span class="st">""</span>, subtitle<span class="op">=</span><span class="st">"Distribution of effects"</span>) <span class="op">+</span></span>
 <span id="cb27-11"><a href="#cb27-11" aria-hidden="true" tabindex="-1"></a>  theme(axis_text_y<span class="op">=</span>element_blank(), legend_position<span class="op">=</span><span class="st">"none"</span>)</span>
 <span id="cb27-12"><a href="#cb27-12" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb27-13"><a href="#cb27-13" aria-hidden="true" tabindex="-1"></a>display(p1 <span class="op">|</span> p2)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb27-13"><a href="#cb27-13" aria-hidden="true" tabindex="-1"></a>display(p1 <span class="op">|</span> p2)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output cell-output-display">
 <div>
@@ -3504,7 +3511,7 @@ Mean Poisson Deviance: 0.467089</code></pre>
 <div id="cell-ice_lgb" class="cell" data-message="false" data-execution_count="22">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb28"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a>ice_lgb_link <span class="op">=</span> mid_lgb.conditional(</span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb28"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a>ice_lgb_link <span class="op">=</span> mid_lgb.conditional(</span>
 <span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a>  <span class="bu">type</span><span class="op">=</span><span class="st">"link"</span>, variable<span class="op">=</span><span class="st">"DrivAge"</span>, data<span class="op">=</span>X_train.sample(<span class="dv">200</span>)</span>
 <span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a>)</span>
 <span id="cb28-4"><a href="#cb28-4" aria-hidden="true" tabindex="-1"></a>ice_lgb <span class="op">=</span> mid_lgb.conditional(</span>
@@ -3525,7 +3532,7 @@ Mean Poisson Deviance: 0.467089</code></pre>
 <span id="cb28-19"><a href="#cb28-19" aria-hidden="true" tabindex="-1"></a>  labs(y <span class="op">=</span> <span class="st">"Prediction"</span>, title <span class="op">=</span> <span class="st">""</span>,</span>
 <span id="cb28-20"><a href="#cb28-20" aria-hidden="true" tabindex="-1"></a>     subtitle <span class="op">=</span> <span class="st">"Change in original scale"</span>)</span>
 <span id="cb28-21"><a href="#cb28-21" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb28-22"><a href="#cb28-22" aria-hidden="true" tabindex="-1"></a>display(p1 <span class="op">|</span> p2)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb28-22"><a href="#cb28-22" aria-hidden="true" tabindex="-1"></a>display(p1 <span class="op">|</span> p2)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output cell-output-display">
 <div>
@@ -3542,7 +3549,7 @@ Mean Poisson Deviance: 0.467089</code></pre>
 <div id="cell-bd_lgb" class="cell" data-message="false" data-execution_count="23">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb29"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a>np.random.seed(<span class="dv">42</span>)</span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb29"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a>np.random.seed(<span class="dv">42</span>)</span>
 <span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a>row_ids <span class="op">=</span> <span class="bu">sorted</span>(</span>
 <span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a>  np.random.randint(<span class="dv">0</span>, train.shape[<span class="dv">0</span>], <span class="dv">4</span>).tolist()</span>
 <span id="cb29-4"><a href="#cb29-4" aria-hidden="true" tabindex="-1"></a>)</span>
@@ -3561,7 +3568,7 @@ Mean Poisson Deviance: 0.467089</code></pre>
 <span id="cb29-17"><a href="#cb29-17" aria-hidden="true" tabindex="-1"></a>display(</span>
 <span id="cb29-18"><a href="#cb29-18" aria-hidden="true" tabindex="-1"></a>  (bd_plots[<span class="dv">0</span>] <span class="op">|</span> bd_plots[<span class="dv">1</span>]) <span class="op">/</span></span>
 <span id="cb29-19"><a href="#cb29-19" aria-hidden="true" tabindex="-1"></a>  (bd_plots[<span class="dv">2</span>] <span class="op">|</span> bd_plots[<span class="dv">3</span>]) </span>
-<span id="cb29-20"><a href="#cb29-20" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb29-20"><a href="#cb29-20" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output cell-output-display">
 <div>
@@ -3635,13 +3642,14 @@ Mean Poisson Deviance: 0.467089</code></pre>
       e.clearSelection();
     }
     const getTextToCopy = function(trigger) {
-        const codeEl = trigger.previousElementSibling.cloneNode(true);
-        for (const childEl of codeEl.children) {
-          if (isCodeAnnotation(childEl)) {
-            childEl.remove();
-          }
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
         }
-        return codeEl.innerText;
+      }
+      return codeEl.innerText;
     }
     const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
       text: getTextToCopy

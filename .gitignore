@@ -8,3 +8,5 @@
 /data/*.pkl
 /powerpoint/
 /notebooks/*.ipynb
+
+**/*.quarto_ipynb

@@ -1,0 +1,200 @@
+---
+title: "Going Beyond: Interpreting Survival Models"
+---
+
+## Introduction
+
+### Expanding Interpretability to Survival Analysis
+
+We are thrilled to announce the release of `{midr}` 0.6.0.
+This update brings the core principles of the MID framework to a highly requested domain: *Survival Analysis*.
+
+With this release, users can now decompose and interpret complex, "black-box" survival models—such as Random Survival Forests (RSF)—just as easily as standard regression and classification models.
+
+Key new features in 0.6.0 include:
+
+- **Native Support for Survival Models**: The `interpret()` function now natively supports some survival models including Cox proportional hazard models (`{survival}`) and random survival forests (`{randomForestSRC}`, `{ranger}`).
+
+- **Time-Dependent Sequence of MID Models**: Because predicted survival probabilities change over time, `{midr}` now calculates and returns an array of time-varying MID surrogate models.
+
+## Example
+
+```{r}
+#| message: FALSE
+#| warning: FALSE
+# required packages
+library(survival)
+library(randomForestSRC)
+library(midr)
+
+library(ggplot2)
+library(gridExtra)
+library(patchwork)
+theme_set(theme_midr())
+
+data(flchain, package = "survival")
+```
+
+Here is a look at how `{midr}` 0.6.0 interprets a Random Survival Forest model using the `flchain` dataset.
+
+### Predictive Modeling
+
+```{r}
+# predictive modeling: random survival forest
+rsf_model <- rfsrc(
+  Surv(futime, death) ~ age + sex + sample.yr + kappa + lambda, 
+  data = flchain, 
+  ntree = 100,
+  nodesize = 20,
+  na.action = "na.impute"
+)
+
+rsf_model
+```
+
+### Surrogate Modeling
+
+```{r}
+# surrogate modeling
+mid_model <- interpret(
+  Surv(futime, death) ~ (age + sex + sample.yr + kappa + lambda) ^ 2, 
+  data = flchain,
+  model = rsf_model,
+  lambda = .05,
+  na.action = na.pass
+)
+
+mid_model
+```
+
+### Intercept
+
+Baseline survival probabilities, i.e. the average predicted survival probabilities, are stored as `$intercept`.
+
+Here, we compare the intercepts with the Kaplan-Meier curve.
+
+```{r}
+#| fig.height: 3
+#| fig.width: 7.25
+km_fit <- survfit(
+  Surv(futime, death) ~ 1, data = flchain
+)
+
+par.midr()
+
+plot(
+  km_fit, 
+  main = "Kaplan-Meier vs. Average Model Prediction",
+#  xlab = "Days from Sample Collection", 
+  ylab = "Survival Probability",
+  ylim = c(0.5, 1.0)
+)
+
+lines(
+  x = as.numeric(labels(mid_model)),
+  y = mid_model$intercept,
+  col = "#FF000080",
+  lwd = 2
+)
+```
+
+### Uninterpreted Variation Ratio
+
+Since `{midr}` fits as many models as the number of time periods of interest, the uninterpreted variation ratio changes with time.
+
+```{r}
+#| fig.height: 3
+#| fig.width: 7.25
+par.midr()
+
+plot(
+  x = as.numeric(labels(mid_model)),
+  y = mid_model$ratio,
+  type = "l",
+  main = "Uninterpreted Variation Ratio",
+  ylab = "Ratio",
+  xlab = "Days from Sample Collection"
+)
+```
+
+### Feature Importance
+
+```{r}
+imp <- mid.importance(mid_model)
+
+p <- ggmid(
+  imp,
+  theme = "magma",
+  terms = rev(head(mid.terms(imp), 10))
+) +
+  theme(legend.position = "none") +
+  coord_flip()
+
+q <- ggmid(
+  imp,
+  type = "series",
+  theme = "Tableau 10",
+  terms = mid.terms(imp, interactions = FALSE),
+  linewidth = 3/4
+) +
+  labs(x = "Days from Sample Collection") +
+  theme(legend.position = "bottom")
+
+p / q
+```
+
+### Feature Effects
+
+```{r}
+#| fig.height: 8
+#| fig.width: 7.25
+plots <- mid.plots(
+  mid_model,
+  terms = c("age", "lambda", "kappa", "sex"),
+  type = "series",
+  theme = "mako",
+  resolution = 100,
+  intercept = TRUE,
+  limits = c(-0.05, 1.05)
+)
+
+plots[[4]] <- plots[[4]] + labs(x = "Days from Sample Collection")
+
+grid.arrange(nrow = 4, grobs = plots)
+```
+
+### Breakdown of Effects
+
+```{r}
+brk <- mid.breakdown(mid_model, data = flchain[1 ,])
+
+p <- ggmid(
+  brk,
+  theme = "cividis",
+  terms = rev(head(mid.terms(imp, interactions = FALSE)))
+) +
+  theme(legend.position = "none") +
+  coord_flip()
+
+q <- ggmid(
+  brk,
+  type = "series",
+  theme = "Tableau 10",
+  terms = mid.terms(imp, interactions = FALSE),
+  linewidth = 3/4
+) +
+  labs(x = "Days from Sample Collection") +
+  theme(legend.position = "bottom")
+
+p / q
+```
+
+### Conditional Expectation
+
+```{r}
+#| fig.height: 3
+#| fig.width: 7.25
+con <- mid.conditional(mid_model, variable = "age", data = flchain[100, ])
+ggmid(con, theme = "viridis", type = "series") +
+  labs(x = "Days from Sample Collection")
+```
