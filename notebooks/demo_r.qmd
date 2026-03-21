@@ -11,7 +11,7 @@ This notebook demonstrates a solution using **Maximum Interpretation Decompositi
 
 ::: {.callout-warning}
 ## Compatibility Notice
-This article relies on features introduced in **midr (>= 0.5.3)** and **midnight (>= 0.1.1)**. Please ensure your packages are up to date. Some visualization arguments are not available in earlier versions.
+This article relies on features introduced in **midr (>= 0.6.0)** and **midnight (>= 0.1.1.902)**. Please ensure your packages are up to date. Some visualization arguments are not available in earlier versions.
 :::
 
 ### What is MID?
@@ -43,6 +43,7 @@ library(lightgbm)
 # surrogate modeling
 library(midr)
 library(midnight)
+nightfall(methods = TRUE, solvers = FALSE, themes = FALSE)
 
 # visualization
 library(ggplot2)

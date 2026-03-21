@@ -260,7 +260,7 @@ window.Quarto = {
 </div>
 </div>
 <div class="callout-body-container callout-body">
-<p>This article relies on features introduced in <strong>midlearn (&gt;= 0.1.3)</strong> and the underlying R package <strong>midr (&gt;= 0.5.3)</strong>. Please ensure your library and package are up to date. Some arguments are not available in earlier versions.</p>
+<p>This article relies on features introduced in <strong>midlearn (&gt;= 0.1.5)</strong> and the underlying R package <strong>midr (&gt;= 0.6.0)</strong>. Please ensure your library and package are up to date. Some arguments are not available in earlier versions.</p>
 </div>
 </div>
 <section id="what-is-mid" class="level3">
@@ -372,20 +372,21 @@ d(y_i,\hat{y}_i) = 2\left[y_i (\log y_i - \log \hat{y}_i) - (y_i - \hat{y}_i)\ri
   --sklearn-color-fitted-level-1: #d4ebff;
   --sklearn-color-fitted-level-2: #b3dbfd;
   --sklearn-color-fitted-level-3: cornflowerblue;
+}
 
+#sk-container-id-1.light {
   /* Specific color for light theme */
-  --sklearn-color-text-on-default-background: var(--sg-text-color, var(--theme-code-foreground, var(--jp-content-font-color1, black)));
-  --sklearn-color-background: var(--sg-background-color, var(--theme-background, var(--jp-layout-color0, white)));
-  --sklearn-color-border-box: var(--sg-text-color, var(--theme-code-foreground, var(--jp-content-font-color1, black)));
+  --sklearn-color-text-on-default-background: black;
+  --sklearn-color-background: white;
+  --sklearn-color-border-box: black;
   --sklearn-color-icon: #696969;
+}
 
-  @media (prefers-color-scheme: dark) {
-    /* Redefinition of color scheme for dark theme */
-    --sklearn-color-text-on-default-background: var(--sg-text-color, var(--theme-code-foreground, var(--jp-content-font-color1, white)));
-    --sklearn-color-background: var(--sg-background-color, var(--theme-background, var(--jp-layout-color0, #111)));
-    --sklearn-color-border-box: var(--sg-text-color, var(--theme-code-foreground, var(--jp-content-font-color1, white)));
-    --sklearn-color-icon: #878787;
-  }
+#sk-container-id-1.dark {
+  --sklearn-color-text-on-default-background: white;
+  --sklearn-color-background: #111;
+  --sklearn-color-border-box: white;
+  --sklearn-color-icon: #878787;
 }
 
 #sk-container-id-1 {
@@ -511,8 +512,8 @@ clickable and can be expanded/collapsed.
   padding: 0.5em;
   box-sizing: border-box;
   text-align: center;
-  align-items: start;
-  justify-content: space-between;
+  align-items: center;
+  justify-content: center;
   gap: 0.5em;
 }
 
@@ -619,7 +620,6 @@ clickable and can be expanded/collapsed.
 #sk-container-id-1 div.sk-label label {
   font-family: monospace;
   font-weight: bold;
-  display: inline-block;
   line-height: 1.2em;
 }
 
@@ -665,7 +665,7 @@ a:visited.sk-estimator-doc-link {
   font-size: smaller;
   line-height: 1em;
   font-family: monospace;
-  background-color: var(--sklearn-color-background);
+  background-color: var(--sklearn-color-unfitted-level-0);
   border-radius: 1em;
   height: 1em;
   width: 1em;
@@ -673,16 +673,17 @@ a:visited.sk-estimator-doc-link {
   margin-left: 0.5em;
   text-align: center;
   /* unfitted */
-  border: var(--sklearn-color-unfitted-level-1) 1pt solid;
-  color: var(--sklearn-color-unfitted-level-1);
+  border: var(--sklearn-color-unfitted-level-3) 1pt solid;
+  color: var(--sklearn-color-unfitted-level-3);
 }
 
 .sk-estimator-doc-link.fitted,
 a:link.sk-estimator-doc-link.fitted,
 a:visited.sk-estimator-doc-link.fitted {
   /* fitted */
-  border: var(--sklearn-color-fitted-level-1) 1pt solid;
-  color: var(--sklearn-color-fitted-level-1);
+  background-color: var(--sklearn-color-fitted-level-0);
+  border: var(--sklearn-color-fitted-level-3) 1pt solid;
+  color: var(--sklearn-color-fitted-level-3);
 }
 
 /* On hover */
@@ -692,7 +693,8 @@ div.sk-label-container:hover .sk-estimator-doc-link:hover,
 .sk-estimator-doc-link:hover {
   /* unfitted */
   background-color: var(--sklearn-color-unfitted-level-3);
-  color: var(--sklearn-color-background);
+  border: var(--sklearn-color-fitted-level-0) 1pt solid;
+  color: var(--sklearn-color-unfitted-level-0);
   text-decoration: none;
 }
 
@@ -702,7 +704,8 @@ div.sk-label-container:hover .sk-estimator-doc-link.fitted:hover,
 .sk-estimator-doc-link.fitted:hover {
   /* fitted */
   background-color: var(--sklearn-color-fitted-level-3);
-  color: var(--sklearn-color-background);
+  border: var(--sklearn-color-fitted-level-0) 1pt solid;
+  color: var(--sklearn-color-fitted-level-0);
   text-decoration: none;
 }
 
@@ -742,7 +745,7 @@ div.sk-label-container:hover .sk-estimator-doc-link.fitted:hover,
   font-size: 1rem;
   line-height: 1em;
   font-family: monospace;
-  background-color: var(--sklearn-color-background);
+  background-color: var(--sklearn-color-unfitted-level-0);
   border-radius: 1rem;
   height: 1rem;
   width: 1rem;
@@ -754,6 +757,7 @@ div.sk-label-container:hover .sk-estimator-doc-link.fitted:hover,
 
 #sk-container-id-1 a.estimator_doc_link.fitted {
   /* fitted */
+  background-color: var(--sklearn-color-fitted-level-0);
   border: var(--sklearn-color-fitted-level-1) 1pt solid;
   color: var(--sklearn-color-fitted-level-1);
 }
@@ -771,10 +775,17 @@ div.sk-label-container:hover .sk-estimator-doc-link.fitted:hover,
   background-color: var(--sklearn-color-fitted-level-3);
 }
 
+.estimator-table {
+    font-family: monospace;
+}
+
 .estimator-table summary {
     padding: .5rem;
-    font-family: monospace;
     cursor: pointer;
+}
+
+.estimator-table summary::marker {
+    font-size: 0.7rem;
 }
 
 .estimator-table details[open] {
@@ -786,6 +797,7 @@ div.sk-label-container:hover .sk-estimator-doc-link.fitted:hover,
 .estimator-table .parameters-table {
     margin-left: auto !important;
     margin-right: auto !important;
+    margin-top: 0;
 }
 
 .estimator-table .parameters-table tr:nth-child(odd) {
@@ -804,24 +816,85 @@ div.sk-label-container:hover .sk-estimator-doc-link.fitted:hover,
     border: 1px solid rgba(106, 105, 104, 0.232);
 }
 
-.user-set td {
-    color:rgb(255, 94, 0);
+/*
+    `table td`is set in notebook with right text-align.
+    We need to overwrite it.
+*/
+.estimator-table table td.param {
     text-align: left;
+    position: relative;
+    padding: 0;
 }
 
-.user-set td.value pre {
-    color:rgb(255, 94, 0) !important;
-    background-color: transparent !important;
+.user-set td {
+    color:rgb(255, 94, 0);
+    text-align: left !important;
+}
+
+.user-set td.value {
+    color:rgb(255, 94, 0);
+    background-color: transparent;
 }
 
 .default td {
     color: black;
-    text-align: left;
+    text-align: left !important;
 }
 
 .user-set td i,
 .default td i {
     color: black;
+}
+
+/*
+    Styles for parameter documentation links
+    We need styling for visited so jupyter doesn't overwrite it
+*/
+a.param-doc-link,
+a.param-doc-link:link,
+a.param-doc-link:visited {
+    text-decoration: underline dashed;
+    text-underline-offset: .3em;
+    color: inherit;
+    display: block;
+    padding: .5em;
+}
+
+/* "hack" to make the entire area of the cell containing the link clickable */
+a.param-doc-link::before {
+    position: absolute;
+    content: "";
+    inset: 0;
+}
+
+.param-doc-description {
+    display: none;
+    position: absolute;
+    z-index: 9999;
+    left: 0;
+    padding: .5ex;
+    margin-left: 1.5em;
+    color: var(--sklearn-color-text);
+    box-shadow: .3em .3em .4em #999;
+    width: max-content;
+    text-align: left;
+    max-height: 10em;
+    overflow-y: auto;
+
+    /* unfitted */
+    background: var(--sklearn-color-unfitted-level-0);
+    border: thin solid var(--sklearn-color-unfitted-level-3);
+}
+
+/* Fitted state for parameter tooltips */
+.fitted .param-doc-description {
+    /* fitted */
+    background: var(--sklearn-color-fitted-level-0);
+    border: thin solid var(--sklearn-color-fitted-level-3);
+}
+
+.param-doc-link:hover .param-doc-description {
+    display: block;
 }
 
 .copy-paste-icon {
@@ -834,46 +907,90 @@ div.sk-label-container:hover .sk-estimator-doc-link.fitted:hover,
     height: 14px;
     cursor: pointer;
 }
-</style><div id="sk-container-id-1" class="sk-top-container"><div class="sk-text-repr-fallback"><pre>PoissonRegressor(alpha=0, max_iter=300)</pre><b>In a Jupyter environment, please rerun this cell to show the HTML representation or trust the notebook. <br>On GitHub, the HTML representation is unable to render, please try loading this page with nbviewer.org.</b></div><div class="sk-container" hidden=""><div class="sk-item"><div class="sk-estimator fitted sk-toggleable"><input class="sk-toggleable__control sk-hidden--visually" id="sk-estimator-id-1" type="checkbox" checked=""><label for="sk-estimator-id-1" class="sk-toggleable__label fitted sk-toggleable__label-arrow"><div><div>PoissonRegressor</div></div><div><a class="sk-estimator-doc-link fitted" rel="noreferrer" target="_blank" href="https://scikit-learn.org/1.7/modules/generated/sklearn.linear_model.PoissonRegressor.html">?<span>Documentation for PoissonRegressor</span></a><span class="sk-estimator-doc-link fitted">i<span>Fitted</span></span></div></label><div class="sk-toggleable__content fitted" data-param-prefix="">
+</style><div id="sk-container-id-1" class="sk-top-container"><div class="sk-text-repr-fallback"><pre>PoissonRegressor(alpha=0, max_iter=300)</pre><b>In a Jupyter environment, please rerun this cell to show the HTML representation or trust the notebook. <br>On GitHub, the HTML representation is unable to render, please try loading this page with nbviewer.org.</b></div><div class="sk-container" hidden=""><div class="sk-item"><div class="sk-estimator fitted sk-toggleable"><input class="sk-toggleable__control sk-hidden--visually" id="sk-estimator-id-1" type="checkbox" checked=""><label for="sk-estimator-id-1" class="sk-toggleable__label fitted sk-toggleable__label-arrow"><div><div>PoissonRegressor</div></div><div><a class="sk-estimator-doc-link fitted" rel="noreferrer" target="_blank" href="https://scikit-learn.org/1.8/modules/generated/sklearn.linear_model.PoissonRegressor.html">?<span>Documentation for PoissonRegressor</span></a><span class="sk-estimator-doc-link fitted">i<span>Fitted</span></span></div></label><div class="sk-toggleable__content fitted" data-param-prefix="">
         <div class="estimator-table">
             <details>
                 <summary>Parameters</summary>
                 
 <table class="parameters-table caption-top table table-sm table-striped small">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
 <tbody>
 <tr class="user-set odd">
 <td><em></em></td>
-<td class="param">alpha&nbsp;</td>
+<td class="param"><a href="https://scikit-learn.org/1.8/modules/generated/sklearn.linear_model.PoissonRegressor.html#:~:text=alpha,-float%2C%20default%3D1" class="param-doc-link" rel="noreferrer" target="_blank">alpha <span class="param-doc-description">alpha: float, default=1<br>
+<br>
+Constant that multiplies the L2 penalty term and determines the<br>
+regularization strength. ``alpha = 0`` is equivalent to unpenalized<br>
+GLMs. In this case, the design matrix `X` must have full column rank<br>
+(no collinearities).<br>
+Values of `alpha` must be in the range `[0.0, inf)`.</span></a></td>
 <td class="value">0</td>
 </tr>
 <tr class="default even">
 <td><em></em></td>
-<td class="param">fit_intercept&nbsp;</td>
+<td class="param"><a href="https://scikit-learn.org/1.8/modules/generated/sklearn.linear_model.PoissonRegressor.html#:~:text=fit_intercept,-bool%2C%20default%3DTrue" class="param-doc-link" rel="noreferrer" target="_blank">fit_intercept <span class="param-doc-description">fit_intercept: bool, default=True<br>
+<br>
+Specifies if a constant (a.k.a. bias or intercept) should be<br>
+added to the linear predictor (`X @ coef + intercept`).</span></a></td>
 <td class="value">True</td>
 </tr>
 <tr class="default odd">
 <td><em></em></td>
-<td class="param">solver&nbsp;</td>
+<td class="param"><a href="https://scikit-learn.org/1.8/modules/generated/sklearn.linear_model.PoissonRegressor.html#:~:text=solver,-%7B%27lbfgs%27%2C%20%27newton-cholesky%27%7D%2C%20default%3D%27lbfgs%27" class="param-doc-link" rel="noreferrer" target="_blank">solver <span class="param-doc-description">solver: {'lbfgs', 'newton-cholesky'}, default='lbfgs'<br>
+<br>
+Algorithm to use in the optimization problem:<br>
+<br>
+'lbfgs'<br>
+Calls scipy's L-BFGS-B optimizer.<br>
+<br>
+'newton-cholesky'<br>
+Uses Newton-Raphson steps (in arbitrary precision arithmetic equivalent to<br>
+iterated reweighted least squares) with an inner Cholesky based solver.<br>
+This solver is a good choice for `n_samples` &gt;&gt; `n_features`, especially<br>
+with one-hot encoded categorical features with rare categories. Be aware<br>
+that the memory usage of this solver has a quadratic dependency on<br>
+`n_features` because it explicitly computes the Hessian matrix.<br>
+<br>
+.. versionadded:: 1.2</span></a></td>
 <td class="value">'lbfgs'</td>
 </tr>
 <tr class="user-set even">
 <td><em></em></td>
-<td class="param">max_iter&nbsp;</td>
+<td class="param"><a href="https://scikit-learn.org/1.8/modules/generated/sklearn.linear_model.PoissonRegressor.html#:~:text=max_iter,-int%2C%20default%3D100" class="param-doc-link" rel="noreferrer" target="_blank">max_iter <span class="param-doc-description">max_iter: int, default=100<br>
+<br>
+The maximal number of iterations for the solver.<br>
+Values must be in the range `[1, inf)`.</span></a></td>
 <td class="value">300</td>
 </tr>
 <tr class="default odd">
 <td><em></em></td>
-<td class="param">tol&nbsp;</td>
+<td class="param"><a href="https://scikit-learn.org/1.8/modules/generated/sklearn.linear_model.PoissonRegressor.html#:~:text=tol,-float%2C%20default%3D1e-4" class="param-doc-link" rel="noreferrer" target="_blank">tol <span class="param-doc-description">tol: float, default=1e-4<br>
+<br>
+Stopping criterion. For the lbfgs solver,<br>
+the iteration will stop when ``max{|g_j|, j = 1, ..., d} &lt;= tol``<br>
+where ``g_j`` is the j-th component of the gradient (derivative) of<br>
+the objective function.<br>
+Values must be in the range `(0.0, inf)`.</span></a></td>
 <td class="value">0.0001</td>
 </tr>
 <tr class="default even">
 <td><em></em></td>
-<td class="param">warm_start&nbsp;</td>
+<td class="param"><a href="https://scikit-learn.org/1.8/modules/generated/sklearn.linear_model.PoissonRegressor.html#:~:text=warm_start,-bool%2C%20default%3DFalse" class="param-doc-link" rel="noreferrer" target="_blank">warm_start <span class="param-doc-description">warm_start: bool, default=False<br>
+<br>
+If set to ``True``, reuse the solution of the previous call to ``fit``<br>
+as initialization for ``coef_`` and ``intercept_`` .</span></a></td>
 <td class="value">False</td>
 </tr>
 <tr class="default odd">
 <td><em></em></td>
-<td class="param">verbose&nbsp;</td>
+<td class="param"><a href="https://scikit-learn.org/1.8/modules/generated/sklearn.linear_model.PoissonRegressor.html#:~:text=verbose,-int%2C%20default%3D0" class="param-doc-link" rel="noreferrer" target="_blank">verbose <span class="param-doc-description">verbose: int, default=0<br>
+<br>
+For the lbfgs solver set verbose to any positive number for verbosity.<br>
+Values must be in the range `[0, inf)`.</span></a></td>
 <td class="value">0</td>
 </tr>
 </tbody>
@@ -915,15 +1032,88 @@ div.sk-label-container:hover .sk-estimator-doc-link.fitted:hover,
     return false;
 }
 
-document.querySelectorAll('.fa-regular.fa-copy').forEach(function(element) {
+document.querySelectorAll('.copy-paste-icon').forEach(function(element) {
     const toggleableContent = element.closest('.sk-toggleable__content');
     const paramPrefix = toggleableContent ? toggleableContent.dataset.paramPrefix : '';
-    const paramName = element.parentElement.nextElementSibling.textContent.trim();
+    const paramName = element.parentElement.nextElementSibling
+        .textContent.trim().split(' ')[0];
     const fullParamName = paramPrefix ? `${paramPrefix}${paramName}` : paramName;
 
     element.setAttribute('title', fullParamName);
 });
-</script>
+
+
+/**
+ * Adapted from Skrub
+ * https://github.com/skrub-data/skrub/blob/403466d1d5d4dc76a7ef569b3f8228db59a31dc3/skrub/_reporting/_data/templates/report.js#L789
+ * @returns "light" or "dark"
+ */
+function detectTheme(element) {
+    const body = document.querySelector('body');
+
+    // Check VSCode theme
+    const themeKindAttr = body.getAttribute('data-vscode-theme-kind');
+    const themeNameAttr = body.getAttribute('data-vscode-theme-name');
+
+    if (themeKindAttr && themeNameAttr) {
+        const themeKind = themeKindAttr.toLowerCase();
+        const themeName = themeNameAttr.toLowerCase();
+
+        if (themeKind.includes("dark") || themeName.includes("dark")) {
+            return "dark";
+        }
+        if (themeKind.includes("light") || themeName.includes("light")) {
+            return "light";
+        }
+    }
+
+    // Check Jupyter theme
+    if (body.getAttribute('data-jp-theme-light') === 'false') {
+        return 'dark';
+    } else if (body.getAttribute('data-jp-theme-light') === 'true') {
+        return 'light';
+    }
+
+    // Guess based on a parent element's color
+    const color = window.getComputedStyle(element.parentNode, null).getPropertyValue('color');
+    const match = color.match(/^rgb\s*\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\)\s*$/i);
+    if (match) {
+        const [r, g, b] = [
+            parseFloat(match[1]),
+            parseFloat(match[2]),
+            parseFloat(match[3])
+        ];
+
+        // https://en.wikipedia.org/wiki/HSL_and_HSV#Lightness
+        const luma = 0.299 * r + 0.587 * g + 0.114 * b;
+
+        if (luma > 180) {
+            // If the text is very bright we have a dark theme
+            return 'dark';
+        }
+        if (luma < 75) {
+            // If the text is very dark we have a light theme
+            return 'light';
+        }
+        // Otherwise fall back to the next heuristic.
+    }
+
+    // Fallback to system preference
+    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+}
+
+
+function forceTheme(elementId) {
+    const estimatorElement = document.querySelector(`#${elementId}`);
+    if (estimatorElement === null) {
+        console.error(`Element with id ${elementId} not found.`);
+    } else {
+        const theme = detectTheme(estimatorElement);
+        estimatorElement.classList.add(theme);
+    }
+}
+
+forceTheme('sk-container-id-1');</script>
 </div>
 </div>
 <div id="pred_fit_glm" class="cell" data-execution_count="5">
@@ -940,7 +1130,7 @@ document.querySelectorAll('.fa-regular.fa-copy').forEach(function(element) {
 <span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"Mean Poisson Deviance:"</span>, <span class="bu">round</span>(deviance, <span class="dv">6</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output cell-output-stdout">
-<pre><code>Mean Poisson Deviance: 0.470569</code></pre>
+<pre><code>Mean Poisson Deviance: 0.470563</code></pre>
 </div>
 </div>
 <section id="surrogate-modeling" class="level3">
@@ -977,20 +1167,21 @@ document.querySelectorAll('.fa-regular.fa-copy').forEach(function(element) {
   --sklearn-color-fitted-level-1: #d4ebff;
   --sklearn-color-fitted-level-2: #b3dbfd;
   --sklearn-color-fitted-level-3: cornflowerblue;
+}
 
+#sk-container-id-2.light {
   /* Specific color for light theme */
-  --sklearn-color-text-on-default-background: var(--sg-text-color, var(--theme-code-foreground, var(--jp-content-font-color1, black)));
-  --sklearn-color-background: var(--sg-background-color, var(--theme-background, var(--jp-layout-color0, white)));
-  --sklearn-color-border-box: var(--sg-text-color, var(--theme-code-foreground, var(--jp-content-font-color1, black)));
+  --sklearn-color-text-on-default-background: black;
+  --sklearn-color-background: white;
+  --sklearn-color-border-box: black;
   --sklearn-color-icon: #696969;
+}
 
-  @media (prefers-color-scheme: dark) {
-    /* Redefinition of color scheme for dark theme */
-    --sklearn-color-text-on-default-background: var(--sg-text-color, var(--theme-code-foreground, var(--jp-content-font-color1, white)));
-    --sklearn-color-background: var(--sg-background-color, var(--theme-background, var(--jp-layout-color0, #111)));
-    --sklearn-color-border-box: var(--sg-text-color, var(--theme-code-foreground, var(--jp-content-font-color1, white)));
-    --sklearn-color-icon: #878787;
-  }
+#sk-container-id-2.dark {
+  --sklearn-color-text-on-default-background: white;
+  --sklearn-color-background: #111;
+  --sklearn-color-border-box: white;
+  --sklearn-color-icon: #878787;
 }
 
 #sk-container-id-2 {
@@ -1116,8 +1307,8 @@ clickable and can be expanded/collapsed.
   padding: 0.5em;
   box-sizing: border-box;
   text-align: center;
-  align-items: start;
-  justify-content: space-between;
+  align-items: center;
+  justify-content: center;
   gap: 0.5em;
 }
 
@@ -1224,7 +1415,6 @@ clickable and can be expanded/collapsed.
 #sk-container-id-2 div.sk-label label {
   font-family: monospace;
   font-weight: bold;
-  display: inline-block;
   line-height: 1.2em;
 }
 
@@ -1270,7 +1460,7 @@ a:visited.sk-estimator-doc-link {
   font-size: smaller;
   line-height: 1em;
   font-family: monospace;
-  background-color: var(--sklearn-color-background);
+  background-color: var(--sklearn-color-unfitted-level-0);
   border-radius: 1em;
   height: 1em;
   width: 1em;
@@ -1278,16 +1468,17 @@ a:visited.sk-estimator-doc-link {
   margin-left: 0.5em;
   text-align: center;
   /* unfitted */
-  border: var(--sklearn-color-unfitted-level-1) 1pt solid;
-  color: var(--sklearn-color-unfitted-level-1);
+  border: var(--sklearn-color-unfitted-level-3) 1pt solid;
+  color: var(--sklearn-color-unfitted-level-3);
 }
 
 .sk-estimator-doc-link.fitted,
 a:link.sk-estimator-doc-link.fitted,
 a:visited.sk-estimator-doc-link.fitted {
   /* fitted */
-  border: var(--sklearn-color-fitted-level-1) 1pt solid;
-  color: var(--sklearn-color-fitted-level-1);
+  background-color: var(--sklearn-color-fitted-level-0);
+  border: var(--sklearn-color-fitted-level-3) 1pt solid;
+  color: var(--sklearn-color-fitted-level-3);
 }
 
 /* On hover */
@@ -1297,7 +1488,8 @@ div.sk-label-container:hover .sk-estimator-doc-link:hover,
 .sk-estimator-doc-link:hover {
   /* unfitted */
   background-color: var(--sklearn-color-unfitted-level-3);
-  color: var(--sklearn-color-background);
+  border: var(--sklearn-color-fitted-level-0) 1pt solid;
+  color: var(--sklearn-color-unfitted-level-0);
   text-decoration: none;
 }
 
@@ -1307,7 +1499,8 @@ div.sk-label-container:hover .sk-estimator-doc-link.fitted:hover,
 .sk-estimator-doc-link.fitted:hover {
   /* fitted */
   background-color: var(--sklearn-color-fitted-level-3);
-  color: var(--sklearn-color-background);
+  border: var(--sklearn-color-fitted-level-0) 1pt solid;
+  color: var(--sklearn-color-fitted-level-0);
   text-decoration: none;
 }
 
@@ -1347,7 +1540,7 @@ div.sk-label-container:hover .sk-estimator-doc-link.fitted:hover,
   font-size: 1rem;
   line-height: 1em;
   font-family: monospace;
-  background-color: var(--sklearn-color-background);
+  background-color: var(--sklearn-color-unfitted-level-0);
   border-radius: 1rem;
   height: 1rem;
   width: 1rem;
@@ -1359,6 +1552,7 @@ div.sk-label-container:hover .sk-estimator-doc-link.fitted:hover,
 
 #sk-container-id-2 a.estimator_doc_link.fitted {
   /* fitted */
+  background-color: var(--sklearn-color-fitted-level-0);
   border: var(--sklearn-color-fitted-level-1) 1pt solid;
   color: var(--sklearn-color-fitted-level-1);
 }
@@ -1376,10 +1570,17 @@ div.sk-label-container:hover .sk-estimator-doc-link.fitted:hover,
   background-color: var(--sklearn-color-fitted-level-3);
 }
 
+.estimator-table {
+    font-family: monospace;
+}
+
 .estimator-table summary {
     padding: .5rem;
-    font-family: monospace;
     cursor: pointer;
+}
+
+.estimator-table summary::marker {
+    font-size: 0.7rem;
 }
 
 .estimator-table details[open] {
@@ -1391,6 +1592,7 @@ div.sk-label-container:hover .sk-estimator-doc-link.fitted:hover,
 .estimator-table .parameters-table {
     margin-left: auto !important;
     margin-right: auto !important;
+    margin-top: 0;
 }
 
 .estimator-table .parameters-table tr:nth-child(odd) {
@@ -1409,24 +1611,85 @@ div.sk-label-container:hover .sk-estimator-doc-link.fitted:hover,
     border: 1px solid rgba(106, 105, 104, 0.232);
 }
 
-.user-set td {
-    color:rgb(255, 94, 0);
+/*
+    `table td`is set in notebook with right text-align.
+    We need to overwrite it.
+*/
+.estimator-table table td.param {
     text-align: left;
+    position: relative;
+    padding: 0;
 }
 
-.user-set td.value pre {
-    color:rgb(255, 94, 0) !important;
-    background-color: transparent !important;
+.user-set td {
+    color:rgb(255, 94, 0);
+    text-align: left !important;
+}
+
+.user-set td.value {
+    color:rgb(255, 94, 0);
+    background-color: transparent;
 }
 
 .default td {
     color: black;
-    text-align: left;
+    text-align: left !important;
 }
 
 .user-set td i,
 .default td i {
     color: black;
+}
+
+/*
+    Styles for parameter documentation links
+    We need styling for visited so jupyter doesn't overwrite it
+*/
+a.param-doc-link,
+a.param-doc-link:link,
+a.param-doc-link:visited {
+    text-decoration: underline dashed;
+    text-underline-offset: .3em;
+    color: inherit;
+    display: block;
+    padding: .5em;
+}
+
+/* "hack" to make the entire area of the cell containing the link clickable */
+a.param-doc-link::before {
+    position: absolute;
+    content: "";
+    inset: 0;
+}
+
+.param-doc-description {
+    display: none;
+    position: absolute;
+    z-index: 9999;
+    left: 0;
+    padding: .5ex;
+    margin-left: 1.5em;
+    color: var(--sklearn-color-text);
+    box-shadow: .3em .3em .4em #999;
+    width: max-content;
+    text-align: left;
+    max-height: 10em;
+    overflow-y: auto;
+
+    /* unfitted */
+    background: var(--sklearn-color-unfitted-level-0);
+    border: thin solid var(--sklearn-color-unfitted-level-3);
+}
+
+/* Fitted state for parameter tooltips */
+.fitted .param-doc-description {
+    /* fitted */
+    background: var(--sklearn-color-fitted-level-0);
+    border: thin solid var(--sklearn-color-fitted-level-3);
+}
+
+.param-doc-link:hover .param-doc-description {
+    display: block;
 }
 
 .copy-paste-icon {
@@ -1448,117 +1711,117 @@ div.sk-label-container:hover .sk-estimator-doc-link.fitted:hover,
 <tbody>
 <tr class="user-set odd">
 <td><em></em></td>
-<td class="param">estimator&nbsp;</td>
+<td class="param">estimator</td>
 <td class="value">PoissonRegres... max_iter=300)</td>
 </tr>
 <tr class="default even">
 <td><em></em></td>
-<td class="param">target_classes&nbsp;</td>
+<td class="param">target_classes</td>
 <td class="value">None</td>
 </tr>
 <tr class="default odd">
 <td><em></em></td>
-<td class="param">params_main&nbsp;</td>
+<td class="param">params_main</td>
 <td class="value">None</td>
 </tr>
 <tr class="default even">
 <td><em></em></td>
-<td class="param">params_inter&nbsp;</td>
+<td class="param">params_inter</td>
 <td class="value">None</td>
 </tr>
 <tr class="default odd">
 <td><em></em></td>
-<td class="param">penalty&nbsp;</td>
+<td class="param">penalty</td>
 <td class="value">0</td>
 </tr>
 <tr class="user-set even">
 <td><em></em></td>
-<td class="param">link&nbsp;</td>
+<td class="param">link</td>
 <td class="value">'log'</td>
 </tr>
 <tr class="default odd">
 <td><em></em></td>
-<td class="param">kernel_type&nbsp;</td>
+<td class="param">kernel_type</td>
 <td class="value">1</td>
 </tr>
 <tr class="default even">
 <td><em></em></td>
-<td class="param">encoding_frames&nbsp;</td>
+<td class="param">encoding_frames</td>
 <td class="value">{}</td>
 </tr>
 <tr class="default odd">
 <td><em></em></td>
-<td class="param">model_terms&nbsp;</td>
+<td class="param">model_terms</td>
 <td class="value">None</td>
 </tr>
 <tr class="default even">
 <td><em></em></td>
-<td class="param">singular_ok&nbsp;</td>
+<td class="param">singular_ok</td>
 <td class="value">False</td>
 </tr>
 <tr class="default odd">
 <td><em></em></td>
-<td class="param">mode&nbsp;</td>
+<td class="param">mode</td>
 <td class="value">1</td>
 </tr>
 <tr class="default even">
 <td><em></em></td>
-<td class="param">method&nbsp;</td>
+<td class="param">method</td>
 <td class="value">None</td>
 </tr>
 <tr class="default odd">
 <td><em></em></td>
-<td class="param">centering_penalty&nbsp;</td>
+<td class="param">centering_penalty</td>
 <td class="value">1000000.0</td>
 </tr>
 <tr class="default even">
 <td><em></em></td>
-<td class="param">na_action&nbsp;</td>
+<td class="param">na_action</td>
 <td class="value">'na.omit'</td>
 </tr>
 <tr class="default odd">
 <td><em></em></td>
-<td class="param">verbosity&nbsp;</td>
+<td class="param">verbosity</td>
 <td class="value">1</td>
 </tr>
 <tr class="default even">
 <td><em></em></td>
-<td class="param">split&nbsp;</td>
+<td class="param">split</td>
 <td class="value">'quantile'</td>
 </tr>
 <tr class="default odd">
 <td><em></em></td>
-<td class="param">digits&nbsp;</td>
+<td class="param">digits</td>
 <td class="value">None</td>
 </tr>
 <tr class="default even">
 <td><em></em></td>
-<td class="param">lump&nbsp;</td>
+<td class="param">lump</td>
 <td class="value">'none'</td>
 </tr>
 <tr class="default odd">
 <td><em></em></td>
-<td class="param">others&nbsp;</td>
+<td class="param">others</td>
 <td class="value">'others'</td>
 </tr>
 <tr class="default even">
 <td><em></em></td>
-<td class="param">sep&nbsp;</td>
+<td class="param">sep</td>
 <td class="value">'&gt;'</td>
 </tr>
 <tr class="default odd">
 <td><em></em></td>
-<td class="param">max_nelements&nbsp;</td>
+<td class="param">max_nelements</td>
 <td class="value">1000000000.0</td>
 </tr>
 <tr class="default even">
 <td><em></em></td>
-<td class="param">nil&nbsp;</td>
+<td class="param">nil</td>
 <td class="value">1e-07</td>
 </tr>
 <tr class="default odd">
 <td><em></em></td>
-<td class="param">tol&nbsp;</td>
+<td class="param">tol</td>
 <td class="value">1e-07</td>
 </tr>
 </tbody>
@@ -1566,46 +1829,90 @@ div.sk-label-container:hover .sk-estimator-doc-link.fitted:hover,
 
             </details>
         </div>
-    </div></div></div><div class="sk-parallel"><div class="sk-parallel-item"><div class="sk-item"><div class="sk-label-container"><div class="sk-label fitted sk-toggleable"><input class="sk-toggleable__control sk-hidden--visually" id="sk-estimator-id-3" type="checkbox"><label for="sk-estimator-id-3" class="sk-toggleable__label fitted sk-toggleable__label-arrow"><div><div>estimator: PoissonRegressor</div></div></label><div class="sk-toggleable__content fitted" data-param-prefix="estimator__"><pre>PoissonRegressor(alpha=0, max_iter=300)</pre></div></div></div><div class="sk-serial"><div class="sk-item"><div class="sk-estimator fitted sk-toggleable"><input class="sk-toggleable__control sk-hidden--visually" id="sk-estimator-id-4" type="checkbox"><label for="sk-estimator-id-4" class="sk-toggleable__label fitted sk-toggleable__label-arrow"><div><div>PoissonRegressor</div></div><div><a class="sk-estimator-doc-link fitted" rel="noreferrer" target="_blank" href="https://scikit-learn.org/1.7/modules/generated/sklearn.linear_model.PoissonRegressor.html">?<span>Documentation for PoissonRegressor</span></a></div></label><div class="sk-toggleable__content fitted" data-param-prefix="estimator__">
+    </div></div></div><div class="sk-parallel"><div class="sk-parallel-item"><div class="sk-item"><div class="sk-label-container"><div class="sk-label fitted sk-toggleable"><input class="sk-toggleable__control sk-hidden--visually" id="sk-estimator-id-3" type="checkbox"><label for="sk-estimator-id-3" class="sk-toggleable__label fitted sk-toggleable__label-arrow"><div><div>estimator: PoissonRegressor</div></div></label><div class="sk-toggleable__content fitted" data-param-prefix="estimator__"><pre>PoissonRegressor(alpha=0, max_iter=300)</pre></div></div></div><div class="sk-serial"><div class="sk-item"><div class="sk-estimator fitted sk-toggleable"><input class="sk-toggleable__control sk-hidden--visually" id="sk-estimator-id-4" type="checkbox"><label for="sk-estimator-id-4" class="sk-toggleable__label fitted sk-toggleable__label-arrow"><div><div>PoissonRegressor</div></div><div><a class="sk-estimator-doc-link fitted" rel="noreferrer" target="_blank" href="https://scikit-learn.org/1.8/modules/generated/sklearn.linear_model.PoissonRegressor.html">?<span>Documentation for PoissonRegressor</span></a></div></label><div class="sk-toggleable__content fitted" data-param-prefix="estimator__">
         <div class="estimator-table">
             <details>
                 <summary>Parameters</summary>
                 
 <table class="parameters-table caption-top table table-sm table-striped small">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
 <tbody>
 <tr class="user-set odd">
 <td><em></em></td>
-<td class="param">alpha&nbsp;</td>
+<td class="param"><a href="https://scikit-learn.org/1.8/modules/generated/sklearn.linear_model.PoissonRegressor.html#:~:text=alpha,-float%2C%20default%3D1" class="param-doc-link" rel="noreferrer" target="_blank">alpha <span class="param-doc-description">alpha: float, default=1<br>
+<br>
+Constant that multiplies the L2 penalty term and determines the<br>
+regularization strength. ``alpha = 0`` is equivalent to unpenalized<br>
+GLMs. In this case, the design matrix `X` must have full column rank<br>
+(no collinearities).<br>
+Values of `alpha` must be in the range `[0.0, inf)`.</span></a></td>
 <td class="value">0</td>
 </tr>
 <tr class="default even">
 <td><em></em></td>
-<td class="param">fit_intercept&nbsp;</td>
+<td class="param"><a href="https://scikit-learn.org/1.8/modules/generated/sklearn.linear_model.PoissonRegressor.html#:~:text=fit_intercept,-bool%2C%20default%3DTrue" class="param-doc-link" rel="noreferrer" target="_blank">fit_intercept <span class="param-doc-description">fit_intercept: bool, default=True<br>
+<br>
+Specifies if a constant (a.k.a. bias or intercept) should be<br>
+added to the linear predictor (`X @ coef + intercept`).</span></a></td>
 <td class="value">True</td>
 </tr>
 <tr class="default odd">
 <td><em></em></td>
-<td class="param">solver&nbsp;</td>
+<td class="param"><a href="https://scikit-learn.org/1.8/modules/generated/sklearn.linear_model.PoissonRegressor.html#:~:text=solver,-%7B%27lbfgs%27%2C%20%27newton-cholesky%27%7D%2C%20default%3D%27lbfgs%27" class="param-doc-link" rel="noreferrer" target="_blank">solver <span class="param-doc-description">solver: {'lbfgs', 'newton-cholesky'}, default='lbfgs'<br>
+<br>
+Algorithm to use in the optimization problem:<br>
+<br>
+'lbfgs'<br>
+Calls scipy's L-BFGS-B optimizer.<br>
+<br>
+'newton-cholesky'<br>
+Uses Newton-Raphson steps (in arbitrary precision arithmetic equivalent to<br>
+iterated reweighted least squares) with an inner Cholesky based solver.<br>
+This solver is a good choice for `n_samples` &gt;&gt; `n_features`, especially<br>
+with one-hot encoded categorical features with rare categories. Be aware<br>
+that the memory usage of this solver has a quadratic dependency on<br>
+`n_features` because it explicitly computes the Hessian matrix.<br>
+<br>
+.. versionadded:: 1.2</span></a></td>
 <td class="value">'lbfgs'</td>
 </tr>
 <tr class="user-set even">
 <td><em></em></td>
-<td class="param">max_iter&nbsp;</td>
+<td class="param"><a href="https://scikit-learn.org/1.8/modules/generated/sklearn.linear_model.PoissonRegressor.html#:~:text=max_iter,-int%2C%20default%3D100" class="param-doc-link" rel="noreferrer" target="_blank">max_iter <span class="param-doc-description">max_iter: int, default=100<br>
+<br>
+The maximal number of iterations for the solver.<br>
+Values must be in the range `[1, inf)`.</span></a></td>
 <td class="value">300</td>
 </tr>
 <tr class="default odd">
 <td><em></em></td>
-<td class="param">tol&nbsp;</td>
+<td class="param"><a href="https://scikit-learn.org/1.8/modules/generated/sklearn.linear_model.PoissonRegressor.html#:~:text=tol,-float%2C%20default%3D1e-4" class="param-doc-link" rel="noreferrer" target="_blank">tol <span class="param-doc-description">tol: float, default=1e-4<br>
+<br>
+Stopping criterion. For the lbfgs solver,<br>
+the iteration will stop when ``max{|g_j|, j = 1, ..., d} &lt;= tol``<br>
+where ``g_j`` is the j-th component of the gradient (derivative) of<br>
+the objective function.<br>
+Values must be in the range `(0.0, inf)`.</span></a></td>
 <td class="value">0.0001</td>
 </tr>
 <tr class="default even">
 <td><em></em></td>
-<td class="param">warm_start&nbsp;</td>
+<td class="param"><a href="https://scikit-learn.org/1.8/modules/generated/sklearn.linear_model.PoissonRegressor.html#:~:text=warm_start,-bool%2C%20default%3DFalse" class="param-doc-link" rel="noreferrer" target="_blank">warm_start <span class="param-doc-description">warm_start: bool, default=False<br>
+<br>
+If set to ``True``, reuse the solution of the previous call to ``fit``<br>
+as initialization for ``coef_`` and ``intercept_`` .</span></a></td>
 <td class="value">False</td>
 </tr>
 <tr class="default odd">
 <td><em></em></td>
-<td class="param">verbose&nbsp;</td>
+<td class="param"><a href="https://scikit-learn.org/1.8/modules/generated/sklearn.linear_model.PoissonRegressor.html#:~:text=verbose,-int%2C%20default%3D0" class="param-doc-link" rel="noreferrer" target="_blank">verbose <span class="param-doc-description">verbose: int, default=0<br>
+<br>
+For the lbfgs solver set verbose to any positive number for verbosity.<br>
+Values must be in the range `[0, inf)`.</span></a></td>
 <td class="value">0</td>
 </tr>
 </tbody>
@@ -1647,15 +1954,88 @@ div.sk-label-container:hover .sk-estimator-doc-link.fitted:hover,
     return false;
 }
 
-document.querySelectorAll('.fa-regular.fa-copy').forEach(function(element) {
+document.querySelectorAll('.copy-paste-icon').forEach(function(element) {
     const toggleableContent = element.closest('.sk-toggleable__content');
     const paramPrefix = toggleableContent ? toggleableContent.dataset.paramPrefix : '';
-    const paramName = element.parentElement.nextElementSibling.textContent.trim();
+    const paramName = element.parentElement.nextElementSibling
+        .textContent.trim().split(' ')[0];
     const fullParamName = paramPrefix ? `${paramPrefix}${paramName}` : paramName;
 
     element.setAttribute('title', fullParamName);
 });
-</script>
+
+
+/**
+ * Adapted from Skrub
+ * https://github.com/skrub-data/skrub/blob/403466d1d5d4dc76a7ef569b3f8228db59a31dc3/skrub/_reporting/_data/templates/report.js#L789
+ * @returns "light" or "dark"
+ */
+function detectTheme(element) {
+    const body = document.querySelector('body');
+
+    // Check VSCode theme
+    const themeKindAttr = body.getAttribute('data-vscode-theme-kind');
+    const themeNameAttr = body.getAttribute('data-vscode-theme-name');
+
+    if (themeKindAttr && themeNameAttr) {
+        const themeKind = themeKindAttr.toLowerCase();
+        const themeName = themeNameAttr.toLowerCase();
+
+        if (themeKind.includes("dark") || themeName.includes("dark")) {
+            return "dark";
+        }
+        if (themeKind.includes("light") || themeName.includes("light")) {
+            return "light";
+        }
+    }
+
+    // Check Jupyter theme
+    if (body.getAttribute('data-jp-theme-light') === 'false') {
+        return 'dark';
+    } else if (body.getAttribute('data-jp-theme-light') === 'true') {
+        return 'light';
+    }
+
+    // Guess based on a parent element's color
+    const color = window.getComputedStyle(element.parentNode, null).getPropertyValue('color');
+    const match = color.match(/^rgb\s*\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\)\s*$/i);
+    if (match) {
+        const [r, g, b] = [
+            parseFloat(match[1]),
+            parseFloat(match[2]),
+            parseFloat(match[3])
+        ];
+
+        // https://en.wikipedia.org/wiki/HSL_and_HSV#Lightness
+        const luma = 0.299 * r + 0.587 * g + 0.114 * b;
+
+        if (luma > 180) {
+            // If the text is very bright we have a dark theme
+            return 'dark';
+        }
+        if (luma < 75) {
+            // If the text is very dark we have a light theme
+            return 'light';
+        }
+        // Otherwise fall back to the next heuristic.
+    }
+
+    // Fallback to system preference
+    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+}
+
+
+function forceTheme(elementId) {
+    const estimatorElement = document.querySelector(`#${elementId}`);
+    if (estimatorElement === null) {
+        console.error(`Element with id ${elementId} not found.`);
+    } else {
+        const theme = detectTheme(estimatorElement);
+        estimatorElement.classList.add(theme);
+    }
+}
+
+forceTheme('sk-container-id-2');</script>
 </div>
 </div>
 <div id="pred_mid_glm" class="cell" data-execution_count="7">
@@ -1678,7 +2058,7 @@ document.querySelectorAll('.fa-regular.fa-copy').forEach(function(element) {
 </details>
 <div class="cell-output cell-output-stdout">
 <pre><code>Uninterpreted Variation Ratio: 0.0
-Mean Poisson Deviance: 0.470569</code></pre>
+Mean Poisson Deviance: 0.470563</code></pre>
 </div>
 </div>
 </section>
@@ -1927,20 +2307,21 @@ Early stopping, best iteration is:
   --sklearn-color-fitted-level-1: #d4ebff;
   --sklearn-color-fitted-level-2: #b3dbfd;
   --sklearn-color-fitted-level-3: cornflowerblue;
+}
 
+#sk-container-id-3.light {
   /* Specific color for light theme */
-  --sklearn-color-text-on-default-background: var(--sg-text-color, var(--theme-code-foreground, var(--jp-content-font-color1, black)));
-  --sklearn-color-background: var(--sg-background-color, var(--theme-background, var(--jp-layout-color0, white)));
-  --sklearn-color-border-box: var(--sg-text-color, var(--theme-code-foreground, var(--jp-content-font-color1, black)));
+  --sklearn-color-text-on-default-background: black;
+  --sklearn-color-background: white;
+  --sklearn-color-border-box: black;
   --sklearn-color-icon: #696969;
+}
 
-  @media (prefers-color-scheme: dark) {
-    /* Redefinition of color scheme for dark theme */
-    --sklearn-color-text-on-default-background: var(--sg-text-color, var(--theme-code-foreground, var(--jp-content-font-color1, white)));
-    --sklearn-color-background: var(--sg-background-color, var(--theme-background, var(--jp-layout-color0, #111)));
-    --sklearn-color-border-box: var(--sg-text-color, var(--theme-code-foreground, var(--jp-content-font-color1, white)));
-    --sklearn-color-icon: #878787;
-  }
+#sk-container-id-3.dark {
+  --sklearn-color-text-on-default-background: white;
+  --sklearn-color-background: #111;
+  --sklearn-color-border-box: white;
+  --sklearn-color-icon: #878787;
 }
 
 #sk-container-id-3 {
@@ -2066,8 +2447,8 @@ clickable and can be expanded/collapsed.
   padding: 0.5em;
   box-sizing: border-box;
   text-align: center;
-  align-items: start;
-  justify-content: space-between;
+  align-items: center;
+  justify-content: center;
   gap: 0.5em;
 }
 
@@ -2174,7 +2555,6 @@ clickable and can be expanded/collapsed.
 #sk-container-id-3 div.sk-label label {
   font-family: monospace;
   font-weight: bold;
-  display: inline-block;
   line-height: 1.2em;
 }
 
@@ -2220,7 +2600,7 @@ a:visited.sk-estimator-doc-link {
   font-size: smaller;
   line-height: 1em;
   font-family: monospace;
-  background-color: var(--sklearn-color-background);
+  background-color: var(--sklearn-color-unfitted-level-0);
   border-radius: 1em;
   height: 1em;
   width: 1em;
@@ -2228,16 +2608,17 @@ a:visited.sk-estimator-doc-link {
   margin-left: 0.5em;
   text-align: center;
   /* unfitted */
-  border: var(--sklearn-color-unfitted-level-1) 1pt solid;
-  color: var(--sklearn-color-unfitted-level-1);
+  border: var(--sklearn-color-unfitted-level-3) 1pt solid;
+  color: var(--sklearn-color-unfitted-level-3);
 }
 
 .sk-estimator-doc-link.fitted,
 a:link.sk-estimator-doc-link.fitted,
 a:visited.sk-estimator-doc-link.fitted {
   /* fitted */
-  border: var(--sklearn-color-fitted-level-1) 1pt solid;
-  color: var(--sklearn-color-fitted-level-1);
+  background-color: var(--sklearn-color-fitted-level-0);
+  border: var(--sklearn-color-fitted-level-3) 1pt solid;
+  color: var(--sklearn-color-fitted-level-3);
 }
 
 /* On hover */
@@ -2247,7 +2628,8 @@ div.sk-label-container:hover .sk-estimator-doc-link:hover,
 .sk-estimator-doc-link:hover {
   /* unfitted */
   background-color: var(--sklearn-color-unfitted-level-3);
-  color: var(--sklearn-color-background);
+  border: var(--sklearn-color-fitted-level-0) 1pt solid;
+  color: var(--sklearn-color-unfitted-level-0);
   text-decoration: none;
 }
 
@@ -2257,7 +2639,8 @@ div.sk-label-container:hover .sk-estimator-doc-link.fitted:hover,
 .sk-estimator-doc-link.fitted:hover {
   /* fitted */
   background-color: var(--sklearn-color-fitted-level-3);
-  color: var(--sklearn-color-background);
+  border: var(--sklearn-color-fitted-level-0) 1pt solid;
+  color: var(--sklearn-color-fitted-level-0);
   text-decoration: none;
 }
 
@@ -2297,7 +2680,7 @@ div.sk-label-container:hover .sk-estimator-doc-link.fitted:hover,
   font-size: 1rem;
   line-height: 1em;
   font-family: monospace;
-  background-color: var(--sklearn-color-background);
+  background-color: var(--sklearn-color-unfitted-level-0);
   border-radius: 1rem;
   height: 1rem;
   width: 1rem;
@@ -2309,6 +2692,7 @@ div.sk-label-container:hover .sk-estimator-doc-link.fitted:hover,
 
 #sk-container-id-3 a.estimator_doc_link.fitted {
   /* fitted */
+  background-color: var(--sklearn-color-fitted-level-0);
   border: var(--sklearn-color-fitted-level-1) 1pt solid;
   color: var(--sklearn-color-fitted-level-1);
 }
@@ -2326,10 +2710,17 @@ div.sk-label-container:hover .sk-estimator-doc-link.fitted:hover,
   background-color: var(--sklearn-color-fitted-level-3);
 }
 
+.estimator-table {
+    font-family: monospace;
+}
+
 .estimator-table summary {
     padding: .5rem;
-    font-family: monospace;
     cursor: pointer;
+}
+
+.estimator-table summary::marker {
+    font-size: 0.7rem;
 }
 
 .estimator-table details[open] {
@@ -2341,6 +2732,7 @@ div.sk-label-container:hover .sk-estimator-doc-link.fitted:hover,
 .estimator-table .parameters-table {
     margin-left: auto !important;
     margin-right: auto !important;
+    margin-top: 0;
 }
 
 .estimator-table .parameters-table tr:nth-child(odd) {
@@ -2359,24 +2751,85 @@ div.sk-label-container:hover .sk-estimator-doc-link.fitted:hover,
     border: 1px solid rgba(106, 105, 104, 0.232);
 }
 
-.user-set td {
-    color:rgb(255, 94, 0);
+/*
+    `table td`is set in notebook with right text-align.
+    We need to overwrite it.
+*/
+.estimator-table table td.param {
     text-align: left;
+    position: relative;
+    padding: 0;
 }
 
-.user-set td.value pre {
-    color:rgb(255, 94, 0) !important;
-    background-color: transparent !important;
+.user-set td {
+    color:rgb(255, 94, 0);
+    text-align: left !important;
+}
+
+.user-set td.value {
+    color:rgb(255, 94, 0);
+    background-color: transparent;
 }
 
 .default td {
     color: black;
-    text-align: left;
+    text-align: left !important;
 }
 
 .user-set td i,
 .default td i {
     color: black;
+}
+
+/*
+    Styles for parameter documentation links
+    We need styling for visited so jupyter doesn't overwrite it
+*/
+a.param-doc-link,
+a.param-doc-link:link,
+a.param-doc-link:visited {
+    text-decoration: underline dashed;
+    text-underline-offset: .3em;
+    color: inherit;
+    display: block;
+    padding: .5em;
+}
+
+/* "hack" to make the entire area of the cell containing the link clickable */
+a.param-doc-link::before {
+    position: absolute;
+    content: "";
+    inset: 0;
+}
+
+.param-doc-description {
+    display: none;
+    position: absolute;
+    z-index: 9999;
+    left: 0;
+    padding: .5ex;
+    margin-left: 1.5em;
+    color: var(--sklearn-color-text);
+    box-shadow: .3em .3em .4em #999;
+    width: max-content;
+    text-align: left;
+    max-height: 10em;
+    overflow-y: auto;
+
+    /* unfitted */
+    background: var(--sklearn-color-unfitted-level-0);
+    border: thin solid var(--sklearn-color-unfitted-level-3);
+}
+
+/* Fitted state for parameter tooltips */
+.fitted .param-doc-description {
+    /* fitted */
+    background: var(--sklearn-color-fitted-level-0);
+    border: thin solid var(--sklearn-color-fitted-level-3);
+}
+
+.param-doc-link:hover .param-doc-description {
+    display: block;
 }
 
 .copy-paste-icon {
@@ -2403,102 +2856,102 @@ div.sk-label-container:hover .sk-estimator-doc-link.fitted:hover,
 <tbody>
 <tr class="default odd">
 <td><em></em></td>
-<td class="param">boosting_type&nbsp;</td>
+<td class="param">boosting_type</td>
 <td class="value">'gbdt'</td>
 </tr>
 <tr class="user-set even">
 <td><em></em></td>
-<td class="param">num_leaves&nbsp;</td>
+<td class="param">num_leaves</td>
 <td class="value">61</td>
 </tr>
 <tr class="user-set odd">
 <td><em></em></td>
-<td class="param">max_depth&nbsp;</td>
+<td class="param">max_depth</td>
 <td class="value">19</td>
 </tr>
 <tr class="user-set even">
 <td><em></em></td>
-<td class="param">learning_rate&nbsp;</td>
+<td class="param">learning_rate</td>
 <td class="value">0.01672663973358928</td>
 </tr>
 <tr class="user-set odd">
 <td><em></em></td>
-<td class="param">n_estimators&nbsp;</td>
+<td class="param">n_estimators</td>
 <td class="value">551</td>
 </tr>
 <tr class="default even">
 <td><em></em></td>
-<td class="param">subsample_for_bin&nbsp;</td>
+<td class="param">subsample_for_bin</td>
 <td class="value">200000</td>
 </tr>
 <tr class="user-set odd">
 <td><em></em></td>
-<td class="param">objective&nbsp;</td>
+<td class="param">objective</td>
 <td class="value">'poisson'</td>
 </tr>
 <tr class="default even">
 <td><em></em></td>
-<td class="param">class_weight&nbsp;</td>
+<td class="param">class_weight</td>
 <td class="value">None</td>
 </tr>
 <tr class="default odd">
 <td><em></em></td>
-<td class="param">min_split_gain&nbsp;</td>
+<td class="param">min_split_gain</td>
 <td class="value">0.0</td>
 </tr>
 <tr class="default even">
 <td><em></em></td>
-<td class="param">min_child_weight&nbsp;</td>
+<td class="param">min_child_weight</td>
 <td class="value">0.001</td>
 </tr>
 <tr class="user-set odd">
 <td><em></em></td>
-<td class="param">min_child_samples&nbsp;</td>
+<td class="param">min_child_samples</td>
 <td class="value">10</td>
 </tr>
 <tr class="user-set even">
 <td><em></em></td>
-<td class="param">subsample&nbsp;</td>
+<td class="param">subsample</td>
 <td class="value">0.8123000876841823</td>
 </tr>
 <tr class="default odd">
 <td><em></em></td>
-<td class="param">subsample_freq&nbsp;</td>
+<td class="param">subsample_freq</td>
 <td class="value">0</td>
 </tr>
 <tr class="user-set even">
 <td><em></em></td>
-<td class="param">colsample_bytree&nbsp;</td>
+<td class="param">colsample_bytree</td>
 <td class="value">0.6507848978461632</td>
 </tr>
 <tr class="user-set odd">
 <td><em></em></td>
-<td class="param">reg_alpha&nbsp;</td>
+<td class="param">reg_alpha</td>
 <td class="value">4.234603347091384</td>
 </tr>
 <tr class="user-set even">
 <td><em></em></td>
-<td class="param">reg_lambda&nbsp;</td>
+<td class="param">reg_lambda</td>
 <td class="value">8.790496879009705e-07</td>
 </tr>
 <tr class="user-set odd">
 <td><em></em></td>
-<td class="param">random_state&nbsp;</td>
+<td class="param">random_state</td>
 <td class="value">42</td>
 </tr>
 <tr class="user-set even">
 <td><em></em></td>
-<td class="param">n_jobs&nbsp;</td>
+<td class="param">n_jobs</td>
 <td class="value">-1</td>
 </tr>
 <tr class="user-set odd">
 <td><em></em></td>
-<td class="param">importance_type&nbsp;</td>
+<td class="param">importance_type</td>
 <td class="value">'gain'</td>
 </tr>
 <tr class="user-set even">
 <td><em></em></td>
-<td class="param">verbosity&nbsp;</td>
+<td class="param">verbosity</td>
 <td class="value">-1</td>
 </tr>
 </tbody>
@@ -2540,15 +2993,88 @@ div.sk-label-container:hover .sk-estimator-doc-link.fitted:hover,
     return false;
 }
 
-document.querySelectorAll('.fa-regular.fa-copy').forEach(function(element) {
+document.querySelectorAll('.copy-paste-icon').forEach(function(element) {
     const toggleableContent = element.closest('.sk-toggleable__content');
     const paramPrefix = toggleableContent ? toggleableContent.dataset.paramPrefix : '';
-    const paramName = element.parentElement.nextElementSibling.textContent.trim();
+    const paramName = element.parentElement.nextElementSibling
+        .textContent.trim().split(' ')[0];
     const fullParamName = paramPrefix ? `${paramPrefix}${paramName}` : paramName;
 
     element.setAttribute('title', fullParamName);
 });
-</script>
+
+
+/**
+ * Adapted from Skrub
+ * https://github.com/skrub-data/skrub/blob/403466d1d5d4dc76a7ef569b3f8228db59a31dc3/skrub/_reporting/_data/templates/report.js#L789
+ * @returns "light" or "dark"
+ */
+function detectTheme(element) {
+    const body = document.querySelector('body');
+
+    // Check VSCode theme
+    const themeKindAttr = body.getAttribute('data-vscode-theme-kind');
+    const themeNameAttr = body.getAttribute('data-vscode-theme-name');
+
+    if (themeKindAttr && themeNameAttr) {
+        const themeKind = themeKindAttr.toLowerCase();
+        const themeName = themeNameAttr.toLowerCase();
+
+        if (themeKind.includes("dark") || themeName.includes("dark")) {
+            return "dark";
+        }
+        if (themeKind.includes("light") || themeName.includes("light")) {
+            return "light";
+        }
+    }
+
+    // Check Jupyter theme
+    if (body.getAttribute('data-jp-theme-light') === 'false') {
+        return 'dark';
+    } else if (body.getAttribute('data-jp-theme-light') === 'true') {
+        return 'light';
+    }
+
+    // Guess based on a parent element's color
+    const color = window.getComputedStyle(element.parentNode, null).getPropertyValue('color');
+    const match = color.match(/^rgb\s*\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\)\s*$/i);
+    if (match) {
+        const [r, g, b] = [
+            parseFloat(match[1]),
+            parseFloat(match[2]),
+            parseFloat(match[3])
+        ];
+
+        // https://en.wikipedia.org/wiki/HSL_and_HSV#Lightness
+        const luma = 0.299 * r + 0.587 * g + 0.114 * b;
+
+        if (luma > 180) {
+            // If the text is very bright we have a dark theme
+            return 'dark';
+        }
+        if (luma < 75) {
+            // If the text is very dark we have a light theme
+            return 'light';
+        }
+        // Otherwise fall back to the next heuristic.
+    }
+
+    // Fallback to system preference
+    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+}
+
+
+function forceTheme(elementId) {
+    const estimatorElement = document.querySelector(`#${elementId}`);
+    if (estimatorElement === null) {
+        console.error(`Element with id ${elementId} not found.`);
+    } else {
+        const theme = detectTheme(estimatorElement);
+        estimatorElement.classList.add(theme);
+    }
+}
+
+forceTheme('sk-container-id-3');</script>
 </div>
 </div>
 <div id="pred_fit_lgb" class="cell" data-execution_count="14">
@@ -2622,20 +3148,21 @@ f_{LGB}(\mathbf{x}) \approx g(\mathbf{x}) = g_\emptyset + \sum_{j} g_j(x_j) + \s
   --sklearn-color-fitted-level-1: #d4ebff;
   --sklearn-color-fitted-level-2: #b3dbfd;
   --sklearn-color-fitted-level-3: cornflowerblue;
+}
 
+#sk-container-id-4.light {
   /* Specific color for light theme */
-  --sklearn-color-text-on-default-background: var(--sg-text-color, var(--theme-code-foreground, var(--jp-content-font-color1, black)));
-  --sklearn-color-background: var(--sg-background-color, var(--theme-background, var(--jp-layout-color0, white)));
-  --sklearn-color-border-box: var(--sg-text-color, var(--theme-code-foreground, var(--jp-content-font-color1, black)));
+  --sklearn-color-text-on-default-background: black;
+  --sklearn-color-background: white;
+  --sklearn-color-border-box: black;
   --sklearn-color-icon: #696969;
+}
 
-  @media (prefers-color-scheme: dark) {
-    /* Redefinition of color scheme for dark theme */
-    --sklearn-color-text-on-default-background: var(--sg-text-color, var(--theme-code-foreground, var(--jp-content-font-color1, white)));
-    --sklearn-color-background: var(--sg-background-color, var(--theme-background, var(--jp-layout-color0, #111)));
-    --sklearn-color-border-box: var(--sg-text-color, var(--theme-code-foreground, var(--jp-content-font-color1, white)));
-    --sklearn-color-icon: #878787;
-  }
+#sk-container-id-4.dark {
+  --sklearn-color-text-on-default-background: white;
+  --sklearn-color-background: #111;
+  --sklearn-color-border-box: white;
+  --sklearn-color-icon: #878787;
 }
 
 #sk-container-id-4 {
@@ -2761,8 +3288,8 @@ clickable and can be expanded/collapsed.
   padding: 0.5em;
   box-sizing: border-box;
   text-align: center;
-  align-items: start;
-  justify-content: space-between;
+  align-items: center;
+  justify-content: center;
   gap: 0.5em;
 }
 
@@ -2869,7 +3396,6 @@ clickable and can be expanded/collapsed.
 #sk-container-id-4 div.sk-label label {
   font-family: monospace;
   font-weight: bold;
-  display: inline-block;
   line-height: 1.2em;
 }
 
@@ -2915,7 +3441,7 @@ a:visited.sk-estimator-doc-link {
   font-size: smaller;
   line-height: 1em;
   font-family: monospace;
-  background-color: var(--sklearn-color-background);
+  background-color: var(--sklearn-color-unfitted-level-0);
   border-radius: 1em;
   height: 1em;
   width: 1em;
@@ -2923,16 +3449,17 @@ a:visited.sk-estimator-doc-link {
   margin-left: 0.5em;
   text-align: center;
   /* unfitted */
-  border: var(--sklearn-color-unfitted-level-1) 1pt solid;
-  color: var(--sklearn-color-unfitted-level-1);
+  border: var(--sklearn-color-unfitted-level-3) 1pt solid;
+  color: var(--sklearn-color-unfitted-level-3);
 }
 
 .sk-estimator-doc-link.fitted,
 a:link.sk-estimator-doc-link.fitted,
 a:visited.sk-estimator-doc-link.fitted {
   /* fitted */
-  border: var(--sklearn-color-fitted-level-1) 1pt solid;
-  color: var(--sklearn-color-fitted-level-1);
+  background-color: var(--sklearn-color-fitted-level-0);
+  border: var(--sklearn-color-fitted-level-3) 1pt solid;
+  color: var(--sklearn-color-fitted-level-3);
 }
 
 /* On hover */
@@ -2942,7 +3469,8 @@ div.sk-label-container:hover .sk-estimator-doc-link:hover,
 .sk-estimator-doc-link:hover {
   /* unfitted */
   background-color: var(--sklearn-color-unfitted-level-3);
-  color: var(--sklearn-color-background);
+  border: var(--sklearn-color-fitted-level-0) 1pt solid;
+  color: var(--sklearn-color-unfitted-level-0);
   text-decoration: none;
 }
 
@@ -2952,7 +3480,8 @@ div.sk-label-container:hover .sk-estimator-doc-link.fitted:hover,
 .sk-estimator-doc-link.fitted:hover {
   /* fitted */
   background-color: var(--sklearn-color-fitted-level-3);
-  color: var(--sklearn-color-background);
+  border: var(--sklearn-color-fitted-level-0) 1pt solid;
+  color: var(--sklearn-color-fitted-level-0);
   text-decoration: none;
 }
 
@@ -2992,7 +3521,7 @@ div.sk-label-container:hover .sk-estimator-doc-link.fitted:hover,
   font-size: 1rem;
   line-height: 1em;
   font-family: monospace;
-  background-color: var(--sklearn-color-background);
+  background-color: var(--sklearn-color-unfitted-level-0);
   border-radius: 1rem;
   height: 1rem;
   width: 1rem;
@@ -3004,6 +3533,7 @@ div.sk-label-container:hover .sk-estimator-doc-link.fitted:hover,
 
 #sk-container-id-4 a.estimator_doc_link.fitted {
   /* fitted */
+  background-color: var(--sklearn-color-fitted-level-0);
   border: var(--sklearn-color-fitted-level-1) 1pt solid;
   color: var(--sklearn-color-fitted-level-1);
 }
@@ -3021,10 +3551,17 @@ div.sk-label-container:hover .sk-estimator-doc-link.fitted:hover,
   background-color: var(--sklearn-color-fitted-level-3);
 }
 
+.estimator-table {
+    font-family: monospace;
+}
+
 .estimator-table summary {
     padding: .5rem;
-    font-family: monospace;
     cursor: pointer;
+}
+
+.estimator-table summary::marker {
+    font-size: 0.7rem;
 }
 
 .estimator-table details[open] {
@@ -3036,6 +3573,7 @@ div.sk-label-container:hover .sk-estimator-doc-link.fitted:hover,
 .estimator-table .parameters-table {
     margin-left: auto !important;
     margin-right: auto !important;
+    margin-top: 0;
 }
 
 .estimator-table .parameters-table tr:nth-child(odd) {
@@ -3054,24 +3592,85 @@ div.sk-label-container:hover .sk-estimator-doc-link.fitted:hover,
     border: 1px solid rgba(106, 105, 104, 0.232);
 }
 
-.user-set td {
-    color:rgb(255, 94, 0);
+/*
+    `table td`is set in notebook with right text-align.
+    We need to overwrite it.
+*/
+.estimator-table table td.param {
     text-align: left;
+    position: relative;
+    padding: 0;
 }
 
-.user-set td.value pre {
-    color:rgb(255, 94, 0) !important;
-    background-color: transparent !important;
+.user-set td {
+    color:rgb(255, 94, 0);
+    text-align: left !important;
+}
+
+.user-set td.value {
+    color:rgb(255, 94, 0);
+    background-color: transparent;
 }
 
 .default td {
     color: black;
-    text-align: left;
+    text-align: left !important;
 }
 
 .user-set td i,
 .default td i {
     color: black;
+}
+
+/*
+    Styles for parameter documentation links
+    We need styling for visited so jupyter doesn't overwrite it
+*/
+a.param-doc-link,
+a.param-doc-link:link,
+a.param-doc-link:visited {
+    text-decoration: underline dashed;
+    text-underline-offset: .3em;
+    color: inherit;
+    display: block;
+    padding: .5em;
+}
+
+/* "hack" to make the entire area of the cell containing the link clickable */
+a.param-doc-link::before {
+    position: absolute;
+    content: "";
+    inset: 0;
+}
+
+.param-doc-description {
+    display: none;
+    position: absolute;
+    z-index: 9999;
+    left: 0;
+    padding: .5ex;
+    margin-left: 1.5em;
+    color: var(--sklearn-color-text);
+    box-shadow: .3em .3em .4em #999;
+    width: max-content;
+    text-align: left;
+    max-height: 10em;
+    overflow-y: auto;
+
+    /* unfitted */
+    background: var(--sklearn-color-unfitted-level-0);
+    border: thin solid var(--sklearn-color-unfitted-level-3);
+}
+
+/* Fitted state for parameter tooltips */
+.fitted .param-doc-description {
+    /* fitted */
+    background: var(--sklearn-color-fitted-level-0);
+    border: thin solid var(--sklearn-color-fitted-level-3);
+}
+
+.param-doc-link:hover .param-doc-description {
+    display: block;
 }
 
 .copy-paste-icon {
@@ -3103,117 +3702,117 @@ div.sk-label-container:hover .sk-estimator-doc-link.fitted:hover,
 <tbody>
 <tr class="user-set odd">
 <td><em></em></td>
-<td class="param">estimator&nbsp;</td>
+<td class="param">estimator</td>
 <td class="value">LGBMRegressor... verbosity=-1)</td>
 </tr>
 <tr class="default even">
 <td><em></em></td>
-<td class="param">target_classes&nbsp;</td>
+<td class="param">target_classes</td>
 <td class="value">None</td>
 </tr>
 <tr class="default odd">
 <td><em></em></td>
-<td class="param">params_main&nbsp;</td>
+<td class="param">params_main</td>
 <td class="value">None</td>
 </tr>
 <tr class="default even">
 <td><em></em></td>
-<td class="param">params_inter&nbsp;</td>
+<td class="param">params_inter</td>
 <td class="value">None</td>
 </tr>
 <tr class="user-set odd">
 <td><em></em></td>
-<td class="param">penalty&nbsp;</td>
+<td class="param">penalty</td>
 <td class="value">0.01</td>
 </tr>
 <tr class="user-set even">
 <td><em></em></td>
-<td class="param">link&nbsp;</td>
+<td class="param">link</td>
 <td class="value">'log'</td>
 </tr>
 <tr class="default odd">
 <td><em></em></td>
-<td class="param">kernel_type&nbsp;</td>
+<td class="param">kernel_type</td>
 <td class="value">1</td>
 </tr>
 <tr class="default even">
 <td><em></em></td>
-<td class="param">encoding_frames&nbsp;</td>
+<td class="param">encoding_frames</td>
 <td class="value">{}</td>
 </tr>
 <tr class="default odd">
 <td><em></em></td>
-<td class="param">model_terms&nbsp;</td>
+<td class="param">model_terms</td>
 <td class="value">None</td>
 </tr>
 <tr class="default even">
 <td><em></em></td>
-<td class="param">singular_ok&nbsp;</td>
+<td class="param">singular_ok</td>
 <td class="value">False</td>
 </tr>
 <tr class="default odd">
 <td><em></em></td>
-<td class="param">mode&nbsp;</td>
+<td class="param">mode</td>
 <td class="value">1</td>
 </tr>
 <tr class="default even">
 <td><em></em></td>
-<td class="param">method&nbsp;</td>
+<td class="param">method</td>
 <td class="value">None</td>
 </tr>
 <tr class="default odd">
 <td><em></em></td>
-<td class="param">centering_penalty&nbsp;</td>
+<td class="param">centering_penalty</td>
 <td class="value">1000000.0</td>
 </tr>
 <tr class="default even">
 <td><em></em></td>
-<td class="param">na_action&nbsp;</td>
+<td class="param">na_action</td>
 <td class="value">'na.omit'</td>
 </tr>
 <tr class="default odd">
 <td><em></em></td>
-<td class="param">verbosity&nbsp;</td>
+<td class="param">verbosity</td>
 <td class="value">1</td>
 </tr>
 <tr class="default even">
 <td><em></em></td>
-<td class="param">split&nbsp;</td>
+<td class="param">split</td>
 <td class="value">'quantile'</td>
 </tr>
 <tr class="default odd">
 <td><em></em></td>
-<td class="param">digits&nbsp;</td>
+<td class="param">digits</td>
 <td class="value">None</td>
 </tr>
 <tr class="default even">
 <td><em></em></td>
-<td class="param">lump&nbsp;</td>
+<td class="param">lump</td>
 <td class="value">'none'</td>
 </tr>
 <tr class="default odd">
 <td><em></em></td>
-<td class="param">others&nbsp;</td>
+<td class="param">others</td>
 <td class="value">'others'</td>
 </tr>
 <tr class="default even">
 <td><em></em></td>
-<td class="param">sep&nbsp;</td>
+<td class="param">sep</td>
 <td class="value">'&gt;'</td>
 </tr>
 <tr class="default odd">
 <td><em></em></td>
-<td class="param">max_nelements&nbsp;</td>
+<td class="param">max_nelements</td>
 <td class="value">1000000000.0</td>
 </tr>
 <tr class="default even">
 <td><em></em></td>
-<td class="param">nil&nbsp;</td>
+<td class="param">nil</td>
 <td class="value">1e-07</td>
 </tr>
 <tr class="default odd">
 <td><em></em></td>
-<td class="param">tol&nbsp;</td>
+<td class="param">tol</td>
 <td class="value">1e-07</td>
 </tr>
 </tbody>
@@ -3235,102 +3834,102 @@ div.sk-label-container:hover .sk-estimator-doc-link.fitted:hover,
 <tbody>
 <tr class="default odd">
 <td><em></em></td>
-<td class="param">boosting_type&nbsp;</td>
+<td class="param">boosting_type</td>
 <td class="value">'gbdt'</td>
 </tr>
 <tr class="user-set even">
 <td><em></em></td>
-<td class="param">num_leaves&nbsp;</td>
+<td class="param">num_leaves</td>
 <td class="value">61</td>
 </tr>
 <tr class="user-set odd">
 <td><em></em></td>
-<td class="param">max_depth&nbsp;</td>
+<td class="param">max_depth</td>
 <td class="value">19</td>
 </tr>
 <tr class="user-set even">
 <td><em></em></td>
-<td class="param">learning_rate&nbsp;</td>
+<td class="param">learning_rate</td>
 <td class="value">0.01672663973358928</td>
 </tr>
 <tr class="user-set odd">
 <td><em></em></td>
-<td class="param">n_estimators&nbsp;</td>
+<td class="param">n_estimators</td>
 <td class="value">551</td>
 </tr>
 <tr class="default even">
 <td><em></em></td>
-<td class="param">subsample_for_bin&nbsp;</td>
+<td class="param">subsample_for_bin</td>
 <td class="value">200000</td>
 </tr>
 <tr class="user-set odd">
 <td><em></em></td>
-<td class="param">objective&nbsp;</td>
+<td class="param">objective</td>
 <td class="value">'poisson'</td>
 </tr>
 <tr class="default even">
 <td><em></em></td>
-<td class="param">class_weight&nbsp;</td>
+<td class="param">class_weight</td>
 <td class="value">None</td>
 </tr>
 <tr class="default odd">
 <td><em></em></td>
-<td class="param">min_split_gain&nbsp;</td>
+<td class="param">min_split_gain</td>
 <td class="value">0.0</td>
 </tr>
 <tr class="default even">
 <td><em></em></td>
-<td class="param">min_child_weight&nbsp;</td>
+<td class="param">min_child_weight</td>
 <td class="value">0.001</td>
 </tr>
 <tr class="user-set odd">
 <td><em></em></td>
-<td class="param">min_child_samples&nbsp;</td>
+<td class="param">min_child_samples</td>
 <td class="value">10</td>
 </tr>
 <tr class="user-set even">
 <td><em></em></td>
-<td class="param">subsample&nbsp;</td>
+<td class="param">subsample</td>
 <td class="value">0.8123000876841823</td>
 </tr>
 <tr class="default odd">
 <td><em></em></td>
-<td class="param">subsample_freq&nbsp;</td>
+<td class="param">subsample_freq</td>
 <td class="value">0</td>
 </tr>
 <tr class="user-set even">
 <td><em></em></td>
-<td class="param">colsample_bytree&nbsp;</td>
+<td class="param">colsample_bytree</td>
 <td class="value">0.6507848978461632</td>
 </tr>
 <tr class="user-set odd">
 <td><em></em></td>
-<td class="param">reg_alpha&nbsp;</td>
+<td class="param">reg_alpha</td>
 <td class="value">4.234603347091384</td>
 </tr>
 <tr class="user-set even">
 <td><em></em></td>
-<td class="param">reg_lambda&nbsp;</td>
+<td class="param">reg_lambda</td>
 <td class="value">8.790496879009705e-07</td>
 </tr>
 <tr class="user-set odd">
 <td><em></em></td>
-<td class="param">random_state&nbsp;</td>
+<td class="param">random_state</td>
 <td class="value">42</td>
 </tr>
 <tr class="user-set even">
 <td><em></em></td>
-<td class="param">n_jobs&nbsp;</td>
+<td class="param">n_jobs</td>
 <td class="value">-1</td>
 </tr>
 <tr class="user-set odd">
 <td><em></em></td>
-<td class="param">importance_type&nbsp;</td>
+<td class="param">importance_type</td>
 <td class="value">'gain'</td>
 </tr>
 <tr class="user-set even">
 <td><em></em></td>
-<td class="param">verbosity&nbsp;</td>
+<td class="param">verbosity</td>
 <td class="value">-1</td>
 </tr>
 </tbody>
@@ -3372,15 +3971,88 @@ div.sk-label-container:hover .sk-estimator-doc-link.fitted:hover,
     return false;
 }
 
-document.querySelectorAll('.fa-regular.fa-copy').forEach(function(element) {
+document.querySelectorAll('.copy-paste-icon').forEach(function(element) {
     const toggleableContent = element.closest('.sk-toggleable__content');
     const paramPrefix = toggleableContent ? toggleableContent.dataset.paramPrefix : '';
-    const paramName = element.parentElement.nextElementSibling.textContent.trim();
+    const paramName = element.parentElement.nextElementSibling
+        .textContent.trim().split(' ')[0];
     const fullParamName = paramPrefix ? `${paramPrefix}${paramName}` : paramName;
 
     element.setAttribute('title', fullParamName);
 });
-</script>
+
+
+/**
+ * Adapted from Skrub
+ * https://github.com/skrub-data/skrub/blob/403466d1d5d4dc76a7ef569b3f8228db59a31dc3/skrub/_reporting/_data/templates/report.js#L789
+ * @returns "light" or "dark"
+ */
+function detectTheme(element) {
+    const body = document.querySelector('body');
+
+    // Check VSCode theme
+    const themeKindAttr = body.getAttribute('data-vscode-theme-kind');
+    const themeNameAttr = body.getAttribute('data-vscode-theme-name');
+
+    if (themeKindAttr && themeNameAttr) {
+        const themeKind = themeKindAttr.toLowerCase();
+        const themeName = themeNameAttr.toLowerCase();
+
+        if (themeKind.includes("dark") || themeName.includes("dark")) {
+            return "dark";
+        }
+        if (themeKind.includes("light") || themeName.includes("light")) {
+            return "light";
+        }
+    }
+
+    // Check Jupyter theme
+    if (body.getAttribute('data-jp-theme-light') === 'false') {
+        return 'dark';
+    } else if (body.getAttribute('data-jp-theme-light') === 'true') {
+        return 'light';
+    }
+
+    // Guess based on a parent element's color
+    const color = window.getComputedStyle(element.parentNode, null).getPropertyValue('color');
+    const match = color.match(/^rgb\s*\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\)\s*$/i);
+    if (match) {
+        const [r, g, b] = [
+            parseFloat(match[1]),
+            parseFloat(match[2]),
+            parseFloat(match[3])
+        ];
+
+        // https://en.wikipedia.org/wiki/HSL_and_HSV#Lightness
+        const luma = 0.299 * r + 0.587 * g + 0.114 * b;
+
+        if (luma > 180) {
+            // If the text is very bright we have a dark theme
+            return 'dark';
+        }
+        if (luma < 75) {
+            // If the text is very dark we have a light theme
+            return 'light';
+        }
+        // Otherwise fall back to the next heuristic.
+    }
+
+    // Fallback to system preference
+    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+}
+
+
+function forceTheme(elementId) {
+    const estimatorElement = document.querySelector(`#${elementId}`);
+    if (estimatorElement === null) {
+        console.error(`Element with id ${elementId} not found.`);
+    } else {
+        const theme = detectTheme(estimatorElement);
+        estimatorElement.classList.add(theme);
+    }
+}
+
+forceTheme('sk-container-id-4');</script>
 </div>
 </div>
 <div id="pred_mid_lgb" class="cell" data-execution_count="17">
